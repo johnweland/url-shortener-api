@@ -1,8 +1,8 @@
 {
-  "name": "url-api",
+  "name": "url-shortner",
   "version": "0.1.0",
   "bin": {
-    "url-api": "bin/url-api.js"
+    "url-shortner": "bin/url-shortner.js"
   },
   "scripts": {
     "build": "tsc",
