@@ -1,0 +1,24 @@
+# write an GitHub Action that runs the unit tests with pytest
+# and generate a badge with the test coverage
+
+# Path: .github/workflows/coverage.yaml
+# write an GitHub Action that runs the unit tests with pytest
+on:
+  workflow_call:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Test with pytest
+        run: |
+          pytest test/unit/ -s --cov=src/ --cov-fail-under=95 --cov-report=term-missing:skip-covered
