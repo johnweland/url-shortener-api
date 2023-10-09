@@ -2,7 +2,7 @@ name: Pull Request
 on:
   push:
 jobs:
-  pre:
-    uses: ./.github/workflows/pre.yaml
+  code-quality:
+    uses: ./.github/workflows/code_quality.yaml
     with:
       python-version: 3.10.11

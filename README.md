@@ -1,10 +1,8 @@
 ![Codecov](https://img.shields.io/codecov/c/github/johnweland/url-shortener-api/main?label=Code%20Coverage)
 
-# Welcome to your CDK TypeScript project
+# URL Shortener API
 
-This is a blank project for CDK development with TypeScript.
-
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+This is a simple URL shortener API built with AWS CDK; using AWS Lambda, AWS API Gateway, and DynamoDB.
 
 ## Useful commands
 
@@ -14,3 +12,11 @@ The `cdk.json` file tells the CDK Toolkit how to execute your app.
 - `cdk deploy` deploy this stack to your default AWS account/region
 - `cdk diff` compare deployed stack with current state
 - `cdk synth` emits the synthesized CloudFormation template
+
+## Architecture
+
+COMING SOON
+
+## API Documentation
+
+COMING SOON

@@ -11,3 +11,7 @@ cdk.out
 .venv
 .pytest_cache
 __pycache__
+.coverage
+
+# vs code
+.vscode
