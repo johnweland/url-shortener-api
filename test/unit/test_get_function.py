@@ -6,7 +6,7 @@ from http import HTTPStatus
 import boto3
 from botocore.exceptions import ClientError
 from unittest import TestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import Mock, patch
 from aws_lambda_powertools.utilities.data_classes import APIGatewayProxyEvent
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from moto import mock_dynamodb
@@ -26,11 +26,9 @@ class test_get_function(TestCase):
             TableName=self.table_name,
             KeySchema=[
                 {'AttributeName': 'id', 'KeyType': 'HASH'},
-                {'AttributeName': 'createdAt', 'KeyType': 'RANGE'}
             ],
             AttributeDefinitions=[
                 {'AttributeName': 'id', 'AttributeType': 'S'},
-                {'AttributeName': 'createdAt', 'AttributeType': 'S'}
             ],
             ProvisionedThroughput={
                 'ReadCapacityUnits': 1,
@@ -38,11 +36,15 @@ class test_get_function(TestCase):
             }
         )
         self.table = self.dynamodb.Table(self.table_name)
-
         from src.get_function import (
-            lambda_handler
+            lambda_handler,
+            get_all_items,
+            get_item_by_id
         )
         self.lambda_handler = lambda_handler
+        self.get_all_items = get_all_items
+        self.get_items_by_id = get_item_by_id
+        self.seed_data()
 
     def seed_data(self):
         table = self.table
@@ -63,7 +65,6 @@ class test_get_function(TestCase):
 
     def test_get_all_items(self):
         """ Test get_all_items function. """
-        self.seed_data()
         event = APIGatewayProxyEvent(
                 data={
                     "path": "/api/v1/records",
@@ -71,11 +72,8 @@ class test_get_function(TestCase):
                     "headers": {"Content-Type": "application/json"},
                 }
             )
-
-        context: LambdaContext = MagicMock()
-
+        context: LambdaContext = Mock()
         response = self.lambda_handler(event, context)
-
         self.assertEqual(response['statusCode'], HTTPStatus.OK.value)
         self.assertEqual(
             json.loads(response['body'])['Count'], 2
@@ -99,7 +97,6 @@ class test_get_function(TestCase):
 
     def test_get_item_by_id(self):
         """ Test get_item_by_id function. """
-        self.seed_data()
         event = APIGatewayProxyEvent(
                 data={
                     "path": "/api/v1/records/de305d54",
@@ -107,19 +104,17 @@ class test_get_function(TestCase):
                     "headers": {"Content-Type": "application/json"},
                 }
             )
-
-        context: LambdaContext = MagicMock()
-
+        context: LambdaContext = Mock()
         response = self.lambda_handler(event, context)
+        str_response = json.dumps(response['multiValueHeaders']['Location'][0])
         self.assertEqual(response['statusCode'], HTTPStatus.FOUND.value)
         self.assertEqual(
-            json.loads(response['headers']['Location']),
+            json.loads(str_response),
             'https://www.google.com'
         )
 
     def test_get_item_by_id_not_found(self):
         """ Test get_item_by_id function. """
-        self.seed_data()
         event = APIGatewayProxyEvent(
                 data={
                     "path": "/api/v1/records/123",
@@ -127,31 +122,60 @@ class test_get_function(TestCase):
                     "headers": {"Content-Type": "application/json"},
                 }
             )
-        context: LambdaContext = MagicMock()
+        context: LambdaContext = Mock()
         response = self.lambda_handler(event, context)
         self.assertEqual(response['statusCode'], HTTPStatus.NOT_FOUND.value)
-        self.assertEqual(json.loads(response['body'])['message'], 'Not found')
-
-    @patch('src.get_function.table')
-    def test_lambda_handler_error(self, mock_client):
-        mock_client.scan.side_effect = ClientError(
-            {'Error': {'Code': '500', 'Message': 'Internal Server Error'}},
-            'scan'
-        )
-        event = APIGatewayProxyEvent(
-                data={
-                    "path": "/api/v1/records/123",
-                    "httpMethod": "POST",
-                    "headers": {"Content-Type": "application/json"},
-                }
-            )
-        context: LambdaContext = MagicMock()
-        response = self.lambda_handler(event, context)
-        self.assertEqual(
-            response['statusCode'],
-            HTTPStatus.INTERNAL_SERVER_ERROR.value
-        )
         self.assertEqual(
             json.loads(response['body'])['message'],
-            'Internal Server Error'
+            'URL not found'
         )
+
+    def test_get_all_items_error(self):
+        """ Test get_all_items function when there is an error. """
+        with patch('src.get_function.table.scan') as mock_scan:
+            mock_scan.side_effect = ClientError(
+                {'Error': {'Code': '500', 'Message': 'Internal Server Error'}},
+                'scan'
+            )
+            event = APIGatewayProxyEvent(
+                    data={
+                        "path": "/api/v1/records",
+                        "httpMethod": "GET",
+                        "headers": {"Content-Type": "application/json"},
+                    }
+                )
+            context: LambdaContext = Mock()
+            response = self.lambda_handler(event, context)
+            self.assertEqual(
+                response['statusCode'],
+                HTTPStatus.INTERNAL_SERVER_ERROR.value
+            )
+            self.assertEqual(
+                json.loads(response['body'])['message'],
+                'Internal Server Error'
+            )
+
+    def test_get_item_by_id_error(self):
+        """ Test get_item_by_id function when there is an error. """
+        with patch('src.get_function.table.get_item') as mock_get_item:
+            mock_get_item.side_effect = ClientError(
+                {'Error': {'Code': '500', 'Message': 'Internal Server Error'}},
+                'get_item'
+            )
+            event = APIGatewayProxyEvent(
+                    data={
+                        "path": "/api/v1/records/de305d54",
+                        "httpMethod": "GET",
+                        "headers": {"Content-Type": "application/json"},
+                    }
+                )
+            context: LambdaContext = Mock()
+            response = self.lambda_handler(event, context)
+            self.assertEqual(
+                response['statusCode'],
+                HTTPStatus.INTERNAL_SERVER_ERROR.value
+            )
+            self.assertEqual(
+                json.loads(response['body'])['message'],
+                'Internal Server Error'
+            )
