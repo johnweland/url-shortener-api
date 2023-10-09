@@ -1,6 +1,6 @@
 name: Pull Request
 on:
-  push:
+  pull_request:
 jobs:
   code-quality:
     uses: ./.github/workflows/code_quality.yaml
