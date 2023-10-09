@@ -5,11 +5,11 @@ on:
 jobs:
   # call lint job
   lint:
-    uses: .github/workflows/lint.yaml@main
+    uses: ./.github/workflows/lint.yaml@main
     with:
       python-version: 3.10
   # call test job
   test:
-    uses: .github/workflows/coverage.yaml@main
+    uses: ./.github/workflows/coverage.yaml@main
     with:
       python-version: 3.10
