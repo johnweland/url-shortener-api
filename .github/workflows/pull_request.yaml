@@ -1,7 +1,6 @@
+name: Pull Request
 on:
   push:
-    branches:
-      - main
 jobs:
   pre:
     uses: ./.github/workflows/pre.yaml
