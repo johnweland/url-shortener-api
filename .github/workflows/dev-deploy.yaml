@@ -1,6 +1,8 @@
 name: Deploy to DEV
 on:
   workflow_call:
+permissions:
+  id-token: write
 jobs:
   deploy:
     name: Dev
@@ -8,6 +10,18 @@ jobs:
     environment: dev
     steps:
       - uses: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-duration-seconds: 3600
+      - name: Install Dependencies
+        run: |
+          npm install -g aws-cdk aws-cli
+      - name: Test AWS connection
+        run: |
+          aws sts get-caller-identity
       - name: Deploy CDK to AWS
         run: |
           echo "Deploying CDK to AWS ${{ vars.STAGE }}"
