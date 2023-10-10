@@ -6,16 +6,16 @@ on:
     branches:
       - main
 jobs:
-  pre-deploy:
-    name: Pre-Flight
-    uses: ./.github/workflows/pre-deploy.yaml
   dev:
-    name: Deploy
-    uses: ./.github/workflows/dev-deploy.yaml
+    name: Deploy to Dev
+    uses: ./.github/workflows/deploy-to-aws.yaml
+    with:
+      environment: dev
     secrets: inherit
-    needs: pre-deploy
   prod:
-    name: Deploy
-    uses: ./.github/workflows/prod-deploy.yaml
+    name: Deploy to Prod
+    uses: ./.github/workflows/deploy-to-aws.yaml
+    with:
+      environment: prod
     secrets: inherit
     needs: dev
