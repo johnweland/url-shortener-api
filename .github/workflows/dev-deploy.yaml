@@ -2,7 +2,7 @@ on:
   workflow_call:
 jobs:
   deploy:
-    name: Deploy to Dev
+    name: Dev
     runs-on: ubuntu-latest
     environment: dev
     steps:
