@@ -41,9 +41,5 @@ export class DatabaseStack extends cdk.Stack {
       exportName: `${props.stage}-${props.project}-table-name`
     })
 
-    // add a widget for the table to an existing dashboard from the ObservabilityStack
-    props.dashboard.addToDashboard(
-
-    )
   }
 }

@@ -19,28 +19,18 @@ jobs:
       - name: Install dependencies
         run: |
           npm install -g aws-cdk
-      - name: Deploy CDK to AWS
+      - name: Listing Stacks to be Deployed
         run: |
-          echo "Deploying CDK to AWS ${{ vars.STAGE }}"
-  qa:
-    runs-on: ubuntu-latest
-    needs: dev
-    environment: qa
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python ${{ inputs.python-version }}
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ inputs.python-version }}
-      - name: Install dependencies
+          cdk list
+      - name: Synthesize CDK
         run: |
-          npm install -g aws-cdk
+          cdk synth
       - name: Deploy CDK to AWS
         run: |
           echo "Deploying CDK to AWS ${{ vars.STAGE }}"
   prod:
     runs-on: ubuntu-latest
-    needs: qa
+    needs: dev
     environment: prod
     steps:
       - uses: actions/checkout@v2
@@ -51,6 +41,12 @@ jobs:
       - name: Install dependencies
         run: |
           npm install -g aws-cdk
+      - name: Listing Stacks to be Deployed
+        run: |
+          cdk list
+      - name: Synthesize CDK
+        run: |
+          cdk synth
       - name: Deploy CDK to AWS
         run: |
           echo "Deploying CDK to AWS ${{ vars.STAGE }}"
