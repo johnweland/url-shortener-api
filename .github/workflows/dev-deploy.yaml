@@ -7,6 +7,7 @@ jobs:
     environment: dev
     needs: setup
     steps:
+      - uses: actions/checkout@v2
       - name: Install CDK
         run: |
           npm install -g aws-cdk
@@ -21,6 +22,7 @@ jobs:
     environment: dev
     needs: setup
     steps:
+      - uses: actions/checkout@v2
       - name: Install CDK
         run: |
           npm install -g aws-cdk
@@ -35,6 +37,7 @@ jobs:
     environment: dev
     needs: [list, synth]
     steps:
+      - uses: actions/checkout@v2
       - name: Deploy CDK to AWS
         run: |
           echo "Deploying CDK to AWS ${{ vars.STAGE }}"
