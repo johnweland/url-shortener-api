@@ -1,0 +1,39 @@
+name: Deploy
+on:
+  workflow_call:
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install CDK
+        run: |
+          npm install -g aws-cdk
+      - name: Install dependencies
+        run: |
+          npm i
+  list:
+    runs-on: ubuntu-latest
+    environment: prod
+    needs: setup
+    steps:
+      - name: Listing Stacks to be Deployed
+        run: |
+          cdk list
+  synth:
+    runs-on: ubuntu-latest
+    environment: prod
+    needs: list
+    steps:
+      - name: Synthesize CDK
+        run: |
+          cdk synth
+  deploy:
+    runs-on: ubuntu-latest
+    environment: prod
+    needs: synth
+    steps:
+      - name: Deploy CDK to AWS
+        run: |
+          echo "Deploying CDK to AWS ${{ vars.STAGE }}"
