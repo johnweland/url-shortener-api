@@ -1,3 +1,4 @@
+name: Deploy to Prod
 on:
   workflow_call:
 jobs:

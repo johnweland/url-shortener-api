@@ -1,3 +1,4 @@
+name: Deploy to DEV
 on:
   workflow_call:
 jobs:
