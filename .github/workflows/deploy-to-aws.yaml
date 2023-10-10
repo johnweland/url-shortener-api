@@ -1,0 +1,83 @@
+name: Deploy to AWS
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "AWS environment"
+        type: "string"
+        required: true
+        default: "dev"
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  list:
+    name: CDK List
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install CDK
+        run: |
+          npm install -g aws-cdk
+      - name: Install dependencies
+        run: |
+          npm i
+      - name: Listing Stacks to be Deployed
+        run: |
+          cdk list
+  synth:
+    name: CDK Synth
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install CDK
+        run: |
+          npm install -g aws-cdk
+      - name: Install dependencies
+        run: |
+          npm i
+      - name: Synthesize CDK
+        run: |
+          cdk synth
+  diff:
+    name: CDK Diff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-duration-seconds: 3600
+      - name: Install CDK
+        run: |
+          npm install -g aws-cdk
+      - name: Install dependencies
+        run: |
+          npm i
+      - name: Listing Stacks to be Deployed
+        run: |
+          cdk diff
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    needs: [list, synth, diff]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-duration-seconds: 3600
+      - name: Install Dependencies
+        run: |
+          npm install -g aws-cdk aws-cli
+      - name: Test AWS connection
+        run: |
+          aws sts get-caller-identity
+      - name: Deploy CDK to AWS
+        run: |
+          echo "Deploying CDK to AWS ${{ vars.STAGE }}"
