@@ -1,8 +1,8 @@
-name: Deploy to Prod
 on:
   workflow_call:
 jobs:
   deploy:
+    name: Deploy to Prod
     runs-on: ubuntu-latest
     environment: prod
     steps:
