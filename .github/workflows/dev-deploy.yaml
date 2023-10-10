@@ -1,39 +1,10 @@
-name: Deploy
+name: Deploy to Dev
 on:
   workflow_call:
 jobs:
-  list:
-    runs-on: ubuntu-latest
-    environment: dev
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install CDK
-        run: |
-          npm install -g aws-cdk
-      - name: Install dependencies
-        run: |
-          npm i
-      - name: Listing Stacks to be Deployed
-        run: |
-          cdk list
-  synth:
-    runs-on: ubuntu-latest
-    environment: dev
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install CDK
-        run: |
-          npm install -g aws-cdk
-      - name: Install dependencies
-        run: |
-          npm i
-      - name: Synthesize CDK
-        run: |
-          cdk synth
   deploy:
     runs-on: ubuntu-latest
     environment: dev
-    needs: [list, synth]
     steps:
       - uses: actions/checkout@v2
       - name: Deploy CDK to AWS
