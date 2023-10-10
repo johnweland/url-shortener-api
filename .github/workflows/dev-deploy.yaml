@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Deploy CDK to AWS
         run: |
           echo "Deploying CDK to AWS ${{ vars.STAGE }}"
