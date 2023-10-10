@@ -11,9 +11,11 @@ jobs:
     uses: ./.github/workflows/pre-deploy.yaml
   dev:
     name: Deploy
-    needs: pre-deploy
     uses: ./.github/workflows/dev-deploy.yaml
+    secrets: inherit
+    needs: pre-deploy
   prod:
     name: Deploy
-    needs: dev
     uses: ./.github/workflows/prod-deploy.yaml
+    secrets: inherit
+    needs: dev
