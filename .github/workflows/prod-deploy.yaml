@@ -16,6 +16,7 @@ jobs:
   list:
     runs-on: ubuntu-latest
     environment: prod
+    needs: setup
     steps:
       - name: Listing Stacks to be Deployed
         run: |
@@ -23,6 +24,7 @@ jobs:
   synth:
     runs-on: ubuntu-latest
     environment: prod
+    needs: setup
     steps:
       - name: Synthesize CDK
         run: |
@@ -30,6 +32,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: prod
+    needs: [setup, synth]
     steps:
       - name: Deploy CDK to AWS
         run: |
