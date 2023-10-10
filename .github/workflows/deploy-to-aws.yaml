@@ -42,6 +42,7 @@ jobs:
   diff:
     name: CDK Diff
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v3
       - name: Configure AWS Credentials
@@ -60,7 +61,7 @@ jobs:
         run: |
           cdk diff
   deploy:
-    name: Deploy to ${{ inputs.environment }}
+    name: Deploy to AWS
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     needs: [list, synth, diff]
