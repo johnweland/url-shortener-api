@@ -5,7 +5,6 @@ jobs:
   list:
     runs-on: ubuntu-latest
     environment: dev
-    needs: setup
     steps:
       - uses: actions/checkout@v2
       - name: Install CDK
@@ -20,7 +19,6 @@ jobs:
   synth:
     runs-on: ubuntu-latest
     environment: dev
-    needs: setup
     steps:
       - uses: actions/checkout@v2
       - name: Install CDK
