@@ -40,8 +40,8 @@ jobs:
           echo "Deploying CDK to AWS ${{ vars.STAGE }}"
   prod:
     runs-on: ubuntu-latest
-    needs: code-quality
-    environment: qa
+    needs: qa
+    environment: prod
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ inputs.python-version }}
