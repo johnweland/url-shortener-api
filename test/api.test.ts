@@ -1,52 +1,118 @@
 import * as cdk from 'aws-cdk-lib';
-import { Template } from 'aws-cdk-lib/assertions';
+import { Template, Match } from 'aws-cdk-lib/assertions';
 import { ApiStack } from '../lib/api-stack';
 import { coreStackProps } from '../bin/stack-config';
 
-test('API Gateway Created', () => {
-  const app = new cdk.App();
-  const stack = new ApiStack(app, 'MyTestStack', {
+let app: cdk.App, stack: cdk.Stack, template: Template;
+
+beforeAll(() => {
+  app = new cdk.App();
+  stack = new ApiStack(app, 'APIStack', {
     ...coreStackProps
   });
-  const template = Template.fromStack(stack);
-
-  template.hasResource('AWS::ApiGateway::RestApi', {
-    Properties: {
-      Name: "dev-url-shortner-api"
-    }
-  });
+  template = Template.fromStack(stack);
 });
 
-test('Lambdas Created', () => {
-  const app = new cdk.App();
-  const stack = new ApiStack(app, 'MyTestStack', {
-    ...coreStackProps
+describe('API Gateway', () => {
+  it('Should have an API Gateway with the name "dev-url-shortner-api" ', () => {
+    template.hasResourceProperties('AWS::ApiGateway::RestApi',
+      Match.objectLike({
+        Name: "dev-url-shortner-api"
+      })
+    );
   });
-  const template = Template.fromStack(stack);
-
-  template.hasResource('AWS::Lambda::Function', {
-    Properties: {
-      FunctionName: "dev-url-shortner-GET-lambda",
-      Handler: "get_function.lambda_handler",
-    }
+  it('Should have a GET Method', () => {
+    template.hasResourceProperties('AWS::ApiGateway::Method',
+      Match.objectLike({
+        HttpMethod: "GET"
+      })
+    );
   });
-});
-
-test('Roles Created', () => {
-  const app = new cdk.App();
-  const stack = new ApiStack(app, 'MyTestStack', {
-    ...coreStackProps
+  it('Should have tags with the keys "project" and "stage" ', () => {
+    template.hasResourceProperties('AWS::ApiGateway::RestApi',
+      Match.objectLike({
+        Tags: [
+          {
+            Key: "project",
+            Value: coreStackProps.project,
+          },
+          {
+            Key: "stage",
+            Value: coreStackProps.stage,
+          }
+        ]
+      })
+    );
   });
-  const template = Template.fromStack(stack);
-
-  template.hasResource('AWS::IAM::Role', {
-    Properties: {
-      Policies: [
-        {
-          PolicyName: 'dynamo-read-policy',
+  it('Should have a CloudFormation Output/Export for the api url', () => {
+    template.hasOutput('*',
+      Match.objectLike({
+        Export: {
+          Name: "dev-url-shortner-api-url"
         }
-      ],
-      RoleName: "dev-url-shortner-dynamo-GET-role"
-    },
+      })
+    );
   });
+});
+
+describe('GET Lambda', () => {
+  it('Should have a Lambda Function with the name "dev-url-shortner-GET-lambda" ', () => {
+    template.hasResourceProperties('AWS::Lambda::Function',
+      Match.objectLike({
+        FunctionName: "dev-url-shortner-GET-lambda"
+      })
+    );
+  });
+  it('Should have tags with the keys "project" and "stage" ', () => {
+    template.hasResourceProperties('AWS::Lambda::Function',
+      Match.objectLike({
+        Tags: [
+          {
+            Key: "project",
+            Value: coreStackProps.project,
+          },
+          {
+            Key: "stage",
+            Value: coreStackProps.stage,
+          }
+        ]
+      })
+    );
+  });
+});
+
+describe('GET Lambda: Role', () => {
+  it('Should have a name "dev-url-shortner-dynamo-GET-role" ', () => {
+    template.hasResourceProperties('AWS::IAM::Role',
+      Match.objectLike({
+        RoleName: "dev-url-shortner-dynamo-GET-role"
+      })
+    );
+  });
+  // it should have an inline policy named "dynamo-read-policy"
+  // it should have an inline policy named "dynamo-read-policy" with the actions "dynamodb:GetItem" and "dynamodb:Query"
+  it('Should have an inline policy named "dynamo-read-policy" with the actions "dynamodb:GetItem", "dynamodb:Query", "dynamodb:Scan" and "dynamodb:BatchGetItem"', () => {
+    template.hasResourceProperties('AWS::IAM::Role',
+      Match.objectLike({
+        Policies: [
+          {
+            PolicyName: "dynamo-read-policy",
+            PolicyDocument: {
+              Statement: [
+                {
+                  Action: [
+                    'dynamodb:Query',
+                    'dynamodb:Scan',
+                    'dynamodb:GetItem',
+                    'dynamodb:BatchGetItem',
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      })
+    );
+  });
+
 });
