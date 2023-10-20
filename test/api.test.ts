@@ -89,8 +89,6 @@ describe('GET Lambda: Role', () => {
       })
     );
   });
-  // it should have an inline policy named "dynamo-read-policy"
-  // it should have an inline policy named "dynamo-read-policy" with the actions "dynamodb:GetItem" and "dynamodb:Query"
   it('Should have an inline policy named "dynamo-read-policy" with the actions "dynamodb:GetItem", "dynamodb:Query", "dynamodb:Scan" and "dynamodb:BatchGetItem"', () => {
     template.hasResourceProperties('AWS::IAM::Role',
       Match.objectLike({
