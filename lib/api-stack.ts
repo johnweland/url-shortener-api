@@ -15,14 +15,77 @@ export class ApiStack extends cdk.Stack {
     cdk.Tags.of(this).add('stage', props.stage);
 
     // Create a role that that perform scan and query operations on the DynamoDB table
-    const readRole = new iam.Role(this, `${props.stage}-${props.project}-dynamo-read-role`, {
-      roleName: `${props.stage}-${props.project}-table-role`,
+    const readRole = new iam.Role(this, `${props.stage}-${props.project}-dynamo-GET-role`, {
+      roleName: `${props.stage}-${props.project}-dynamo-GET-role`,
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
-      description: `Role to Scan and Query the ${props.stage}-${props.project}-table`,
-      managedPolicies: [
-        iam.ManagedPolicy.fromManagedPolicyArn(this, `${props.stage}-${props.project}-dynamo-read-policy`, 'arn:aws:iam::aws:policy/AmazonDynamoDBReadOnlyAccess')
-      ],
+      description: `Allows Scan and Query of items from the ${props.stage}-${props.project}-table`,
+      inlinePolicies: {
+        'dynamo-read-policy': new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                'dynamodb:Query',
+                'dynamodb:Scan',
+                'dynamodb:GetItem',
+                'dynamodb:BatchGetItem',
+              ],
+              resources: [
+                `arn:aws:dynamodb:${this.region}:${this.account}:table/${props.stage}-${props.project}-table`,
+                `arn:aws:dynamodb:${this.region}:${this.account}:table/${props.stage}-${props.project}-table/index/*`,
+              ],
+            }),
+          ],
+        }),
+      }
     });
+
+    // const writeRole = new iam.Role(this, `${props.stage}-${props.project}dynamo-PUT-role`, {
+    //   roleName: `${props.stage}-${props.project}-dynamo-PUT-role`,
+    //   assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+    //   description: `Role to Put, Batch Write, and Update items from the ${props.stage}-${props.project}-table`,
+    //   inlinePolicies: {
+    //     'dynamo-write-policy': new iam.PolicyDocument({
+    //       statements: [
+    //         new iam.PolicyStatement({
+    //           effect: iam.Effect.ALLOW,
+    //           actions: [
+    //             'dynamodb:PutItem',
+    //             'dynamodb:UpdateItem',
+    //             'dynamodb:BatchWriteItem',
+    //           ],
+    //           resources: [
+    //             `arn:aws:dynamodb:${this.region}:${this.account}:table/${props.stage}-${props.project}-table`,
+    //             `arn:aws:dynamodb:${this.region}:${this.account}:table/${props.stage}-${props.project}-table/index/*`,
+    //           ],
+    //         }),
+    //       ],
+    //     }),
+    //   }
+    // })
+
+    // const deleteRole = new iam.Role(this, `${props.stage}-${props.project}dynamo-DELETE-role`, {
+    //   roleName: `${props.stage}-${props.project}-dynamo-DELETE-role`,
+    //   assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+    //   description: `Role to Remove items from the ${props.stage}-${props.project}-table`,
+    //   inlinePolicies: {
+    //     'dynamo-delete-policy': new iam.PolicyDocument({
+    //       statements: [
+    //         new iam.PolicyStatement({
+    //           effect: iam.Effect.ALLOW,
+    //           actions: [
+    //             'dynamodb:DeleteItem',
+    //             'dynamodb:BatchWriteItem',
+    //           ],
+    //           resources: [
+    //             `arn:aws:dynamodb:${this.region}:${this.account}:table/${props.stage}-${props.project}-table`,
+    //             `arn:aws:dynamodb:${this.region}:${this.account}:table/${props.stage}-${props.project}-table/index/*`,
+    //           ],
+    //         }),
+    //       ],
+    //     }),
+    //   }
+    // })
 
     // create the Layer for AWS Lambda Powertools
     const powertoolsLayer = Lambda.LayerVersion.fromLayerVersionArn(this, `${props.stage}-${props.project}-powertools-layer`, `arn:aws:lambda:${this.region}:017000801446:layer:AWSLambdaPowertoolsPythonV2:46`);
