@@ -2,7 +2,6 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { ICoreStackProps } from '../bin/stack-config-types';
 import { Table, AttributeType, BillingMode } from 'aws-cdk-lib/aws-dynamodb';
-import { Dashboard, TextWidget } from 'aws-cdk-lib/aws-cloudwatch';
 
 
 export class DatabaseStack extends cdk.Stack {
@@ -19,14 +18,10 @@ export class DatabaseStack extends cdk.Stack {
         name: 'id',
         type: AttributeType.STRING
       },
-      sortKey: {
-        name: 'createdAt',
-        type: AttributeType.STRING,
-      },
       billingMode: BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       pointInTimeRecovery: true,
-      replicationRegions: ['us-west-2'],
+      // replicationRegions: ['us-west-2'],
     })
 
     new cdk.CfnOutput(this, 'table-arn', {

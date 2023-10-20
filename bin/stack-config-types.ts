@@ -4,7 +4,6 @@ import { EcsOptimizedImage } from "aws-cdk-lib/aws-ecs";
 export interface ICoreStackProps extends StackProps {
   project: string;
   stage: string;
-  dashboard?: any;
   tags?: {
     [key: string]: string;
   }

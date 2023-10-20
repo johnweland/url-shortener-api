@@ -16,7 +16,7 @@ from botocore.exceptions import ClientError
 
 APP_NAME = environ.get("APP_NAME") or "url-shortener GET"
 AWS_REGION = environ.get("AWS_REGION") or "us-east-1"
-TABLE_NAME = environ.get("TABLE_NAME") or "records"
+TABLE_NAME = environ.get("TABLE_NAME") or "dev-url-shortner-table"
 dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
 table = dynamodb.Table(TABLE_NAME)
 app = APIGatewayRestResolver()
@@ -24,7 +24,7 @@ log: Logger = Logger(service=APP_NAME)
 trace: Tracer = Tracer(service=APP_NAME)
 
 
-@app.get("/api/v1/records")
+@app.get("/")
 @trace.capture_method
 def get_all_items() -> Response:
     """Get all items from DynamoDB table."""
@@ -49,7 +49,7 @@ def get_all_items() -> Response:
         )
 
 
-@app.get("/api/v1/records/<id>")
+@app.get("/<id>")
 @trace.capture_method
 def get_item_by_id(id: str) -> Response:
     """Get a item from DynamoDB table."""

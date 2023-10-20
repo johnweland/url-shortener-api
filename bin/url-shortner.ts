@@ -8,16 +8,16 @@ import { ObservabilityStack } from '../lib/observability-stack';
 
 const app = new cdk.App();
 
-const observability = new ObservabilityStack(app, 'observability-stack', {
-  description: `An observability stack for monitoring the ${coreStackProps.project} service`,
-  ...coreStackProps,
+new DatabaseStack(app, `${coreStackProps.stage}-${coreStackProps.project}-database-stack`, {
+  description: `Database deployment and configuration for the ${coreStackProps.project} micro-service`,
+  ...coreStackProps
+});
+new ApiStack(app, `${coreStackProps.stage}-${coreStackProps.project}-api-stack`, {
+  description: `API Gateway and Lambdas for the ${coreStackProps.project} micro-service`,
+  ...coreStackProps
 });
 
-new DatabaseStack(app, 'database-stack', {
-  description: `A database stack for the ${coreStackProps.project} service`,
-  ...coreStackProps
-});
-new ApiStack(app, 'api-stack', {
-  description: `An API stack for the ${coreStackProps.project} service`,
-  ...coreStackProps
-});
+// new ObservabilityStack(app, `${coreStackProps.stage}-${coreStackProps.project}-observability-stack`, {
+//   description: `Observability and monitoring for the ${coreStackProps.project} micro-service`,
+//   ...coreStackProps,
+// });

@@ -11,7 +11,7 @@ export class ObservabilityStack extends cdk.Stack {
     cdk.Tags.of(this).add('project', props.project);
     cdk.Tags.of(this).add('stage', props.stage);
 
-    props.dashboard = new Dashboard(this, `${props.stage}-${props.project}-dashboard`, {
+    const dashboard = new Dashboard(this, `${props.stage}-${props.project}-dashboard`, {
       dashboardName: `${props.stage}-${props.project}-dashboard`,
       defaultInterval: cdk.Duration.minutes(1),
     })
@@ -58,5 +58,6 @@ export class ObservabilityStack extends cdk.Stack {
       description: 'Resource Group Name',
       exportName: `${props.stage}-${props.project}-resource-group`
     })
+
   }
 }
