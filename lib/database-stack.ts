@@ -7,11 +7,10 @@ import { Table, AttributeType, BillingMode } from 'aws-cdk-lib/aws-dynamodb';
 export class DatabaseStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: ICoreStackProps) {
     super(scope, id, props);
-    // tag the stack with the project and stage
+
     cdk.Tags.of(this).add('project', props.project);
     cdk.Tags.of(this).add('stage', props.stage);
 
-    // create a global table using DynamoDB
     new Table(this, `${props.stage}-${props.project}-table`, {
       tableName: `${props.stage}-${props.project}-table`,
       partitionKey: {
@@ -35,6 +34,5 @@ export class DatabaseStack extends cdk.Stack {
       description: 'DynamoDB Table Name',
       exportName: `${props.stage}-${props.project}-table-name`
     })
-
   }
 }

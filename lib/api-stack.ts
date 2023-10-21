@@ -10,11 +10,9 @@ export class ApiStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: ICoreStackProps) {
     super(scope, id, props);
 
-    // tag the stack with the project and stage
     cdk.Tags.of(this).add('project', props.project);
     cdk.Tags.of(this).add('stage', props.stage);
 
-    // Create a role that that perform scan and query operations on the DynamoDB table
     const readRole = new iam.Role(this, `${props.stage}-${props.project}-dynamo-GET-role`, {
       roleName: `${props.stage}-${props.project}-dynamo-GET-role`,
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
@@ -182,13 +180,10 @@ export class ApiStack extends cdk.Stack {
     api.root.addMethod('GET', new APIGW.LambdaIntegration(getLambda));
     api.root.addResource('{id}').addMethod('GET', new APIGW.LambdaIntegration(getLambda));
 
-
     new cdk.CfnOutput(this, 'api-url', {
       value: `${api.url}`,
       description: 'API URL',
       exportName: `${props.stage}-${props.project}-api-url`
     });
-
-
   }
 }

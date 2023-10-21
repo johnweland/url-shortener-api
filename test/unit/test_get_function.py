@@ -22,7 +22,7 @@ class test_get_function(TestCase):
     def setUp(self):
         """Setup before each test."""
         super().setUp()
-        self.table_name = "records"
+        self.table_name = "dev-url-shortner-table"
         self.dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
         self.dynamodb.create_table(
             TableName=self.table_name,
@@ -32,10 +32,17 @@ class test_get_function(TestCase):
             AttributeDefinitions=[
                 {"AttributeName": "id", "AttributeType": "S"},
             ],
-            ProvisionedThroughput={"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
+            ProvisionedThroughput={
+                "ReadCapacityUnits": 1,
+                "WriteCapacityUnits": 1
+            },
         )
         self.table = self.dynamodb.Table(self.table_name)
-        from src.get_function import get_all_items, get_item_by_id, lambda_handler
+        from src.get_function import (
+            get_all_items,
+            get_item_by_id,
+            lambda_handler
+        )
 
         self.lambda_handler = lambda_handler
         self.get_all_items = get_all_items
@@ -63,7 +70,7 @@ class test_get_function(TestCase):
         """Test get_all_items function."""
         event = APIGatewayProxyEvent(
             data={
-                "path": "/api/v1/records",
+                "path": "/",
                 "httpMethod": "GET",
                 "headers": {"Content-Type": "application/json"},
             }
@@ -72,20 +79,28 @@ class test_get_function(TestCase):
         response = self.lambda_handler(event, context)
         self.assertEqual(response["statusCode"], HTTPStatus.OK.value)
         self.assertEqual(json.loads(response["body"])["Count"], 2)
-        self.assertEqual(json.loads(response["body"])["Items"][0]["id"], "de305d54")
         self.assertEqual(
-            json.loads(response["body"])["Items"][0]["url"], "https://www.google.com"
+            json.loads(response["body"])["Items"][0]["id"],
+            "de305d54"
         )
-        self.assertEqual(json.loads(response["body"])["Items"][1]["id"], "75b4431b")
         self.assertEqual(
-            json.loads(response["body"])["Items"][1]["url"], "https://www.example.com"
+            json.loads(response["body"])["Items"][0]["url"],
+            "https://www.google.com"
+        )
+        self.assertEqual(
+            json.loads(response["body"])["Items"][1]["id"],
+            "75b4431b"
+        )
+        self.assertEqual(
+            json.loads(response["body"])["Items"][1]["url"],
+            "https://www.example.com"
         )
 
     def test_get_item_by_id(self):
         """Test get_item_by_id function."""
         event = APIGatewayProxyEvent(
             data={
-                "path": "/api/v1/records/de305d54",
+                "path": "/de305d54",
                 "httpMethod": "GET",
                 "headers": {"Content-Type": "application/json"},
             }
@@ -100,7 +115,7 @@ class test_get_function(TestCase):
         """Test get_item_by_id function."""
         event = APIGatewayProxyEvent(
             data={
-                "path": "/api/v1/records/123",
+                "path": "/123",
                 "httpMethod": "GET",
                 "headers": {"Content-Type": "application/json"},
             }
@@ -108,17 +123,21 @@ class test_get_function(TestCase):
         context: LambdaContext = Mock()
         response = self.lambda_handler(event, context)
         self.assertEqual(response["statusCode"], HTTPStatus.NOT_FOUND.value)
-        self.assertEqual(json.loads(response["body"])["message"], "URL not found")
+        self.assertEqual(
+            json.loads(response["body"])["message"],
+            "URL not found"
+        )
 
     def test_get_all_items_error(self):
         """Test get_all_items function when there is an error."""
         with patch("src.get_function.table.scan") as mock_scan:
             mock_scan.side_effect = ClientError(
-                {"Error": {"Code": "500", "Message": "Internal Server Error"}}, "scan"
+                {"Error": {"Code": "500", "Message": "Internal Server Error"}},
+                "scan"
             )
             event = APIGatewayProxyEvent(
                 data={
-                    "path": "/api/v1/records",
+                    "path": "/",
                     "httpMethod": "GET",
                     "headers": {"Content-Type": "application/json"},
                 }
@@ -129,7 +148,8 @@ class test_get_function(TestCase):
                 response["statusCode"], HTTPStatus.INTERNAL_SERVER_ERROR.value
             )
             self.assertEqual(
-                json.loads(response["body"])["message"], "Internal Server Error"
+                json.loads(response["body"])["message"],
+                "Internal Server Error"
             )
 
     def test_get_item_by_id_error(self):
@@ -141,7 +161,7 @@ class test_get_function(TestCase):
             )
             event = APIGatewayProxyEvent(
                 data={
-                    "path": "/api/v1/records/de305d54",
+                    "path": "/de305d54",
                     "httpMethod": "GET",
                     "headers": {"Content-Type": "application/json"},
                 }
@@ -152,5 +172,6 @@ class test_get_function(TestCase):
                 response["statusCode"], HTTPStatus.INTERNAL_SERVER_ERROR.value
             )
             self.assertEqual(
-                json.loads(response["body"])["message"], "Internal Server Error"
+                json.loads(response["body"])["message"],
+                "Internal Server Error"
             )

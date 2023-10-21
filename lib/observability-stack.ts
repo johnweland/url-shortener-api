@@ -16,6 +16,7 @@ export class ObservabilityStack extends cdk.Stack {
       defaultInterval: cdk.Duration.minutes(1),
     })
 
+
     new cdk.CfnOutput(this, 'dashboardUrl', {
       value: `https://console.aws.amazon.com/cloudwatch/home?region=${this.region}#dashboards:name=${props.stage}-${props.project}-dashboard`,
       description: 'Cloudwatch Dashboard URL',
