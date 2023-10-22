@@ -1,4 +1,4 @@
-""" Unit Tests for DELETE Lambda. """
+""" Unit Tests for POST Lambda. """
 import json
 import os
 import sys
@@ -16,8 +16,8 @@ sys.path.append(os.path.abspath("."))
 
 
 @mock_dynamodb
-class test_delete_function(TestCase):
-    """Test DELETE Lambda."""
+class test_post_function(TestCase):
+    """Test POST Lambda."""
 
     def setUp(self):
         """Setup before each test."""
@@ -38,10 +38,10 @@ class test_delete_function(TestCase):
             },
         )
         self.table = self.dynamodb.Table(self.table_name)
-        from src.delete_function import delete_item_by_id, lambda_handler
+        from src.post_function import post_item, lambda_handler
 
         self.lambda_handler = lambda_handler
-        self.delete_item_by_id = delete_item_by_id
+        self.post_item = post_item
         self.seed_data()
 
     def seed_data(self):
@@ -61,46 +61,30 @@ class test_delete_function(TestCase):
             }
         )
 
-    def test_delete_item_by_id(self):
-        """Test delete_item_by_id function."""
+    def test_post_item(self):
+        """Test post_item function."""
         event = APIGatewayProxyEvent(
             data={
                 "path": "/",
-                "httpMethod": "DELETE",
+                "httpMethod": "POST",
                 "headers": {"Content-Type": "application/json"},
-                "body": json.dumps({"id": "de305d54"}),
+                "body": json.dumps({
+                    "url": "https://www.microsoft.com"
+                }),
             }
         )
         context: LambdaContext = Mock()
         response = self.lambda_handler(event, context)
-        self.assertEqual(response["statusCode"], HTTPStatus.NO_CONTENT.value)
+        self.assertEqual(response["statusCode"], HTTPStatus.CREATED.value)
 
-    def test_delete_item_by_id_not_found(self):
-        """Test delete_item_by_id function when the item is NOT FOUND."""
+    def test_post_item_bad_request(self):
+        """Test post_item_by_id function when there is a BAD REQUEST."""
         event = APIGatewayProxyEvent(
             data={
                 "path": "/",
-                "httpMethod": "DELETE",
+                "httpMethod": "POST",
                 "headers": {"Content-Type": "application/json"},
-                "body": json.dumps({"id": "123"}),
-            }
-        )
-        context: LambdaContext = Mock()
-        response = self.lambda_handler(event, context)
-        self.assertEqual(response["statusCode"], HTTPStatus.NOT_FOUND.value)
-        self.assertEqual(
-            json.loads(response["body"])["message"],
-            "Item with id 123 not found."
-        )
-
-    def test_delete_item_by_id_bad_request(self):
-        """Test delete_item_by_id function when there is a BAD REQUEST."""
-        event = APIGatewayProxyEvent(
-            data={
-                "path": "/",
-                "httpMethod": "DELETE",
-                "headers": {"Content-Type": "application/json"},
-                "body": json.dumps({"ids": ""}),
+                "body": json.dumps({"url": None}),
             }
         )
         context: LambdaContext = Mock()
@@ -108,29 +92,32 @@ class test_delete_function(TestCase):
         self.assertEqual(response["statusCode"], HTTPStatus.BAD_REQUEST.value)
         self.assertEqual(
             json.loads(response["body"])["message"],
-            "id is required."
+            "The 'URL' field is required."
         )
 
-    def test_delete_item_by_id_error(self):
-        """Test delete_item_by_id function when there is an error."""
+    def test_post_item_error(self):
+        """Test post_item function when there is an error."""
         context: LambdaContext = Mock()
         event = APIGatewayProxyEvent(
                 data={
                     "path": "/",
-                    "httpMethod": "DELETE",
+                    "httpMethod": "POST",
                     "headers": {"Content-Type": "application/json"},
-                    "body": json.dumps({"id": "de305d54"}),
+                    "body": json.dumps({
+                        "id": "2cd9cab6",
+                        "url": "https://www.amazon.com"
+                    }),
                 }
             )
         with patch(
-            "src.delete_function.table.delete_item",
+            "src.post_function.table.put_item",
             side_effect=ClientError(
                 error_response={
                       "Error": {
                           "Code": "500",
                           "Message": "Internal Server Error"}
                 },
-                operation_name="delete_item",
+                operation_name="put_item",
               ),
         ):
 

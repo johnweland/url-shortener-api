@@ -175,3 +175,6 @@ class test_get_function(TestCase):
                 json.loads(response["body"])["message"],
                 "Internal Server Error"
             )
+
+    def tearDown(self) -> None:
+        return super().tearDown()
