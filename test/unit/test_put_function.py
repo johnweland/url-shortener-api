@@ -1,4 +1,4 @@
-""" Unit Tests for POST Lambda. """
+""" Unit Tests for PUT Lambda. """
 import json
 import os
 import sys
@@ -16,8 +16,8 @@ sys.path.append(os.path.abspath("."))
 
 
 @mock_dynamodb
-class test_post_function(TestCase):
-    """Test POST Lambda."""
+class test_put_function(TestCase):
+    """Test PUT Lambda."""
 
     def setUp(self):
         """Setup before each test."""
@@ -35,10 +35,10 @@ class test_post_function(TestCase):
             ProvisionedThroughput={"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
         )
         self.table = self.dynamodb.Table(self.table_name)
-        from src.post_function import lambda_handler, post_item
+        from src.put_function import lambda_handler, put_item
 
         self.lambda_handler = lambda_handler
-        self.post_item = post_item
+        self.put_item = put_item
         self.seed_data()
 
     def seed_data(self):
@@ -58,67 +58,52 @@ class test_post_function(TestCase):
             }
         )
 
-    def test_post_item(self):
-        """Test post_item function."""
+    def test_put_item(self):
+        """Test put_item function."""
         event = APIGatewayProxyEvent(
             data={
                 "path": "/",
-                "httpMethod": "POST",
+                "httpMethod": "PUT",
                 "headers": {"Content-Type": "application/json"},
-                "body": json.dumps({"url": "https://www.microsoft.com"}),
+                "body": json.dumps(
+                    {"id": "de305d54", "url": "https://www.microsoft.com"}
+                ),
             }
         )
         context: LambdaContext = Mock()
         response = self.lambda_handler(event, context)
-        self.assertEqual(response["statusCode"], HTTPStatus.CREATED.value)
+        self.assertEqual(response["statusCode"], HTTPStatus.OK.value)
 
-    def test_post_item_conflict(self):
-        """Test post_item function when there is a CONFLICT."""
+    def test_put_item_bad_request(self):
+        """Test put_item_by_id function when there is a BAD REQUEST."""
         event = APIGatewayProxyEvent(
             data={
                 "path": "/",
-                "httpMethod": "POST",
+                "httpMethod": "PUT",
                 "headers": {"Content-Type": "application/json"},
-                "body": json.dumps({"url": "https://www.google.com"}),
-            }
-        )
-        context: LambdaContext = Mock()
-        response = self.lambda_handler(event, context)
-        self.assertEqual(response["statusCode"], HTTPStatus.CONFLICT.value)
-        self.assertEqual(
-            json.loads(response["body"])["message"], "Item already exists."
-        )
-
-    def test_post_item_bad_request(self):
-        """Test post_item_by_id function when there is a BAD REQUEST."""
-        event = APIGatewayProxyEvent(
-            data={
-                "path": "/",
-                "httpMethod": "POST",
-                "headers": {"Content-Type": "application/json"},
-                "body": json.dumps({"url": None}),
+                "body": json.dumps({"url": "https://www.amazon.com"}),
             }
         )
         context: LambdaContext = Mock()
         response = self.lambda_handler(event, context)
         self.assertEqual(response["statusCode"], HTTPStatus.BAD_REQUEST.value)
         self.assertEqual(
-            json.loads(response["body"])["message"], "The 'URL' field is required."
+            json.loads(response["body"])["message"], "The 'id' field is required."
         )
 
-    def test_post_item_error(self):
-        """Test post_item function when there is an error."""
+    def test_put_item_error(self):
+        """Test put_item function when there is an error."""
         context: LambdaContext = Mock()
         event = APIGatewayProxyEvent(
             data={
                 "path": "/",
-                "httpMethod": "POST",
+                "httpMethod": "PUT",
                 "headers": {"Content-Type": "application/json"},
                 "body": json.dumps({"id": "2cd9cab6", "url": "https://www.amazon.com"}),
             }
         )
         with patch(
-            "src.post_function.table.put_item",
+            "src.put_function.table.put_item",
             side_effect=ClientError(
                 error_response={
                     "Error": {"Code": "500", "Message": "Internal Server Error"}

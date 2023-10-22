@@ -5,11 +5,8 @@ from os import environ
 
 import boto3
 from aws_lambda_powertools import Logger, Tracer
-from aws_lambda_powertools.event_handler import (
-    APIGatewayRestResolver,
-    Response,
-    content_types,
-)
+from aws_lambda_powertools.event_handler import (APIGatewayRestResolver,
+                                                 Response, content_types)
 from aws_lambda_powertools.utilities.data_classes import APIGatewayProxyEvent
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from botocore.exceptions import ClientError
@@ -61,8 +58,7 @@ def delete_item_by_id() -> Response:
 
 
 def lambda_handler(
-        event: APIGatewayProxyEvent,
-        context: LambdaContext
+    event: APIGatewayProxyEvent, context: LambdaContext
 ) -> dict[str, any]:
     """Lambda handler."""
     return app.resolve(event=event, context=context)

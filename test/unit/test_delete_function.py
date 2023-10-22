@@ -32,10 +32,7 @@ class test_delete_function(TestCase):
             AttributeDefinitions=[
                 {"AttributeName": "id", "AttributeType": "S"},
             ],
-            ProvisionedThroughput={
-                "ReadCapacityUnits": 1,
-                "WriteCapacityUnits": 1
-            },
+            ProvisionedThroughput={"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
         )
         self.table = self.dynamodb.Table(self.table_name)
         from src.delete_function import delete_item_by_id, lambda_handler
@@ -89,8 +86,7 @@ class test_delete_function(TestCase):
         response = self.lambda_handler(event, context)
         self.assertEqual(response["statusCode"], HTTPStatus.NOT_FOUND.value)
         self.assertEqual(
-            json.loads(response["body"])["message"],
-            "Item with id 123 not found."
+            json.loads(response["body"])["message"], "Item with id 123 not found."
         )
 
     def test_delete_item_by_id_bad_request(self):
@@ -106,41 +102,34 @@ class test_delete_function(TestCase):
         context: LambdaContext = Mock()
         response = self.lambda_handler(event, context)
         self.assertEqual(response["statusCode"], HTTPStatus.BAD_REQUEST.value)
-        self.assertEqual(
-            json.loads(response["body"])["message"],
-            "id is required."
-        )
+        self.assertEqual(json.loads(response["body"])["message"], "id is required.")
 
     def test_delete_item_by_id_error(self):
         """Test delete_item_by_id function when there is an error."""
         context: LambdaContext = Mock()
         event = APIGatewayProxyEvent(
-                data={
-                    "path": "/",
-                    "httpMethod": "DELETE",
-                    "headers": {"Content-Type": "application/json"},
-                    "body": json.dumps({"id": "de305d54"}),
-                }
-            )
+            data={
+                "path": "/",
+                "httpMethod": "DELETE",
+                "headers": {"Content-Type": "application/json"},
+                "body": json.dumps({"id": "de305d54"}),
+            }
+        )
         with patch(
             "src.delete_function.table.delete_item",
             side_effect=ClientError(
                 error_response={
-                      "Error": {
-                          "Code": "500",
-                          "Message": "Internal Server Error"}
+                    "Error": {"Code": "500", "Message": "Internal Server Error"}
                 },
                 operation_name="delete_item",
-              ),
+            ),
         ):
-
             response = self.lambda_handler(event, context)
             self.assertEqual(
                 response["statusCode"], HTTPStatus.INTERNAL_SERVER_ERROR.value
             )
             self.assertEqual(
-                json.loads(response["body"])["message"],
-                "Internal Server Error"
+                json.loads(response["body"])["message"], "Internal Server Error"
             )
 
     def tearDown(self) -> None:
