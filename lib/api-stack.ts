@@ -13,7 +13,7 @@ export class ApiStack extends cdk.Stack {
     cdk.Tags.of(this).add('project', props.project);
     cdk.Tags.of(this).add('stage', props.stage);
 
-    const readRole = new iam.Role(this, `${props.stage}-${props.project}-dynamo-GET-role`, {
+    const getRole = new iam.Role(this, `${props.stage}-${props.project}-dynamo-GET-role`, {
       roleName: `${props.stage}-${props.project}-dynamo-GET-role`,
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
       description: `Allows Scan and Query of items from the ${props.stage}-${props.project}-table`,
@@ -23,10 +23,8 @@ export class ApiStack extends cdk.Stack {
             new iam.PolicyStatement({
               effect: iam.Effect.ALLOW,
               actions: [
-                'dynamodb:Query',
                 'dynamodb:Scan',
                 'dynamodb:GetItem',
-                'dynamodb:BatchGetItem',
               ],
               resources: [
                 `arn:aws:dynamodb:${this.region}:${this.account}:table/${props.stage}-${props.project}-table`,
@@ -38,52 +36,77 @@ export class ApiStack extends cdk.Stack {
       }
     });
 
-    // const writeRole = new iam.Role(this, `${props.stage}-${props.project}dynamo-PUT-role`, {
-    //   roleName: `${props.stage}-${props.project}-dynamo-PUT-role`,
-    //   assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
-    //   description: `Role to Put, Batch Write, and Update items from the ${props.stage}-${props.project}-table`,
-    //   inlinePolicies: {
-    //     'dynamo-write-policy': new iam.PolicyDocument({
-    //       statements: [
-    //         new iam.PolicyStatement({
-    //           effect: iam.Effect.ALLOW,
-    //           actions: [
-    //             'dynamodb:PutItem',
-    //             'dynamodb:UpdateItem',
-    //             'dynamodb:BatchWriteItem',
-    //           ],
-    //           resources: [
-    //             `arn:aws:dynamodb:${this.region}:${this.account}:table/${props.stage}-${props.project}-table`,
-    //             `arn:aws:dynamodb:${this.region}:${this.account}:table/${props.stage}-${props.project}-table/index/*`,
-    //           ],
-    //         }),
-    //       ],
-    //     }),
-    //   }
-    // })
+    const postRole = new iam.Role(this, `${props.stage}-${props.project}-dynamo-POST-role`, {
+      roleName: `${props.stage}-${props.project}-dynamo-PUT-role`,
+      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+      description: `Role to Put, Batch Write, and Update items from the ${props.stage}-${props.project}-table`,
+      inlinePolicies: {
+        'dynamo-write-policy': new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                'dynamodb:Scan',
+                'dynamodb:GetItem',
+                'dynamodb:PutItem',
+              ],
+              resources: [
+                `arn:aws:dynamodb:${this.region}:${this.account}:table/${props.stage}-${props.project}-table`,
+                `arn:aws:dynamodb:${this.region}:${this.account}:table/${props.stage}-${props.project}-table/index/*`,
+              ],
+            }),
+          ],
+        }),
+      }
+    })
 
-    // const deleteRole = new iam.Role(this, `${props.stage}-${props.project}dynamo-DELETE-role`, {
-    //   roleName: `${props.stage}-${props.project}-dynamo-DELETE-role`,
-    //   assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
-    //   description: `Role to Remove items from the ${props.stage}-${props.project}-table`,
-    //   inlinePolicies: {
-    //     'dynamo-delete-policy': new iam.PolicyDocument({
-    //       statements: [
-    //         new iam.PolicyStatement({
-    //           effect: iam.Effect.ALLOW,
-    //           actions: [
-    //             'dynamodb:DeleteItem',
-    //             'dynamodb:BatchWriteItem',
-    //           ],
-    //           resources: [
-    //             `arn:aws:dynamodb:${this.region}:${this.account}:table/${props.stage}-${props.project}-table`,
-    //             `arn:aws:dynamodb:${this.region}:${this.account}:table/${props.stage}-${props.project}-table/index/*`,
-    //           ],
-    //         }),
-    //       ],
-    //     }),
-    //   }
-    // })
+    const putRole = new iam.Role(this, `${props.stage}-${props.project}-dynamo-PUT-role`, {
+      roleName: `${props.stage}-${props.project}-dynamo-PUT-role`,
+      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+      description: `Role to Put, Batch Write, and Update items from the ${props.stage}-${props.project}-table`,
+      inlinePolicies: {
+        'dynamo-write-policy': new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                'dynamodb:Scan',
+                'dynamodb:GetItem',
+                'dynamodb:PutItem',
+              ],
+              resources: [
+                `arn:aws:dynamodb:${this.region}:${this.account}:table/${props.stage}-${props.project}-table`,
+                `arn:aws:dynamodb:${this.region}:${this.account}:table/${props.stage}-${props.project}-table/index/*`,
+              ],
+            }),
+          ],
+        }),
+      }
+    })
+
+    const deleteRole = new iam.Role(this, `${props.stage}-${props.project}-dynamo-DELETE-role`, {
+      roleName: `${props.stage}-${props.project}-dynamo-DELETE-role`,
+      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+      description: `Role to Remove items from the ${props.stage}-${props.project}-table`,
+      inlinePolicies: {
+        'dynamo-delete-policy': new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                'dynamodb:GetItem',
+                'dynamodb:DeleteItem',
+                'dynamodb:BatchWriteItem',
+              ],
+              resources: [
+                `arn:aws:dynamodb:${this.region}:${this.account}:table/${props.stage}-${props.project}-table`,
+                `arn:aws:dynamodb:${this.region}:${this.account}:table/${props.stage}-${props.project}-table/index/*`,
+              ],
+            }),
+          ],
+        }),
+      }
+    })
 
     // create the Layer for AWS Lambda Powertools
     const powertoolsLayer = Lambda.LayerVersion.fromLayerVersionArn(this, `${props.stage}-${props.project}-powertools-layer`, `arn:aws:lambda:${this.region}:017000801446:layer:AWSLambdaPowertoolsPythonV2:46`);
@@ -99,34 +122,34 @@ export class ApiStack extends cdk.Stack {
       layers: [
         powertoolsLayer
       ],
-      role: readRole,
+      role: getRole,
     });
 
-    // const postLambda = new Lambda.Function(this, `${props.stage}-${props.project}-POST-lambda`, {
-    //   functionName: `${props.stage}-${props.project}-POST-lambda`,
-    //   runtime: Lambda.Runtime.PYTHON_3_10,
-    //   handler: 'get_function.lambda_handler',
-    //   code: Lambda.Code.fromAsset('src'),
-    //   memorySize: 128,
-    //   timeout: cdk.Duration.seconds(10),
-    //    layers: [
-    //      powertoolsLayer
-    //    ],
-    //    role: modifyRole,
-    // });
+    const postLambda = new Lambda.Function(this, `${props.stage}-${props.project}-POST-lambda`, {
+      functionName: `${props.stage}-${props.project}-POST-lambda`,
+      runtime: Lambda.Runtime.PYTHON_3_10,
+      handler: 'post_function.lambda_handler',
+      code: Lambda.Code.fromAsset('src'),
+      memorySize: 128,
+      timeout: cdk.Duration.seconds(10),
+      layers: [
+        powertoolsLayer
+      ],
+      role: postRole,
+    });
 
-    // const putLambda = new Lambda.Function(this, `${props.stage}-${props.project}-PUT-lambda`, {
-    //   functionName: `${props.stage}-${props.project}-PUT-lambda`,
-    //   runtime: Lambda.Runtime.PYTHON_3_10,
-    //   handler: 'get_function.lambda_handler',
-    //   code: Lambda.Code.fromAsset('src'),
-    //   memorySize: 128,
-    //   timeout: cdk.Duration.seconds(10),
-    //    layers: [
-    //      powertoolsLayer
-    //    ],
-    //    role: modifyRole,
-    // });
+    const putLambda = new Lambda.Function(this, `${props.stage}-${props.project}-PUT-lambda`, {
+      functionName: `${props.stage}-${props.project}-PUT-lambda`,
+      runtime: Lambda.Runtime.PYTHON_3_10,
+      handler: 'put_function.lambda_handler',
+      code: Lambda.Code.fromAsset('src'),
+      memorySize: 128,
+      timeout: cdk.Duration.seconds(10),
+      layers: [
+        powertoolsLayer
+      ],
+      role: putRole,
+    });
 
     // const patchLambda = new Lambda.Function(this, `${props.stage}-${props.project}-PATCH-lambda`, {
     //   functionName: `${props.stage}-${props.project}-PATCH-lambda`,
@@ -141,18 +164,18 @@ export class ApiStack extends cdk.Stack {
     //    role: modifyRole,
     // });
 
-    // const deleteLambda = new Lambda.Function(this, `${props.stage}-${props.project}-DELETE-lambda`, {
-    //   functionName: `${props.stage}-${props.project}-DELETE-lambda`,
-    //   runtime: Lambda.Runtime.PYTHON_3_10,
-    //   handler: 'get_function.lambda_handler',
-    //   code: Lambda.Code.fromAsset('src'),
-    //   memorySize: 128,
-    //   timeout: cdk.Duration.seconds(10),
-    //   layers: [
-    //      powertoolsLayer
-    //   ],
-    //    role: modifyRole,
-    // });
+    const deleteLambda = new Lambda.Function(this, `${props.stage}-${props.project}-DELETE-lambda`, {
+      functionName: `${props.stage}-${props.project}-DELETE-lambda`,
+      runtime: Lambda.Runtime.PYTHON_3_10,
+      handler: 'delete_function.lambda_handler',
+      code: Lambda.Code.fromAsset('src'),
+      memorySize: 128,
+      timeout: cdk.Duration.seconds(10),
+      layers: [
+        powertoolsLayer
+      ],
+      role: deleteRole,
+    });
 
     // Create the API Gateway and attache the Lambda functions to the appropriate endpoints with methods
     const api = new APIGW.RestApi(this, `${props.stage}-${props.project}-api`, {
@@ -179,6 +202,10 @@ export class ApiStack extends cdk.Stack {
 
     api.root.addMethod('GET', new APIGW.LambdaIntegration(getLambda));
     api.root.addResource('{id}').addMethod('GET', new APIGW.LambdaIntegration(getLambda));
+    api.root.addMethod('POST', new APIGW.LambdaIntegration(postLambda));
+    api.root.addMethod('PUT', new APIGW.LambdaIntegration(putLambda));
+    api.root.addMethod('DELETE', new APIGW.LambdaIntegration(deleteLambda));
+
 
     new cdk.CfnOutput(this, 'api-url', {
       value: `${api.url}`,
