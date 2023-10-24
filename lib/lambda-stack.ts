@@ -1,62 +1,16 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { IApiStackProps } from '../bin/stack-config-types';
-import * as APIGW from 'aws-cdk-lib/aws-apigateway';
 import * as Lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 
 
-
-export class ApiStack extends cdk.Stack {
+export class LambdaStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: IApiStackProps) {
     super(scope, id, props);
 
     cdk.Tags.of(this).add('project', props.project);
     cdk.Tags.of(this).add('stage', props.stage);
-
-    const _logGroup = new cdk.aws_logs.LogGroup(this, `APIGatewayLogGroup`, {
-      logGroupName: `/aws/apigateway/${props.stage}-${props.project}/GatewayExecutionLogs`,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      retention: cdk.aws_logs.RetentionDays.ONE_WEEK,
-    });
-
-    const _api = new APIGW.RestApi(this, `APIGateWay`, {
-      restApiName: `${props.stage}-${props.project}-api-gateway`,
-      description: `An API Gateway for the ${props.project} service`,
-      deployOptions: {
-        stageName: props.stage,
-        metricsEnabled: true,
-        loggingLevel: APIGW.MethodLoggingLevel.INFO,
-        accessLogDestination: new APIGW.LogGroupLogDestination(_logGroup),
-        dataTraceEnabled: true,
-      },
-      endpointConfiguration: {
-        types: [APIGW.EndpointType.REGIONAL],
-      },
-      defaultCorsPreflightOptions: {
-        allowHeaders: ['*'],
-        allowOrigins: ['*'],
-        allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-        allowCredentials: true,
-        statusCode: 200,
-      },
-      cloudWatchRole: true,
-    });
-
-    _api.metricClientError().createAlarm(this, 'ClientErrorAlarm', {
-      threshold: 1,
-      evaluationPeriods: 1,
-      alarmDescription: '4XX Client Error',
-      alarmName: `${props.stage}-${props.project}-client-error`,
-      treatMissingData: cdk.aws_cloudwatch.TreatMissingData.NOT_BREACHING,
-    });
-    _api.metricServerError().createAlarm(this, 'ServerErrorAlarm', {
-      threshold: 1,
-      evaluationPeriods: 1,
-      alarmDescription: '5XX Server Error',
-      alarmName: `${props.stage}-${props.project}-server-error`,
-      treatMissingData: cdk.aws_cloudwatch.TreatMissingData.NOT_BREACHING,
-    });
 
     const _powertoolsLayer = Lambda.LayerVersion.fromLayerVersionArn(this, `PowertoolsLambdaLayer`, `arn:aws:lambda:${this.region}:017000801446:layer:AWSLambdaPowertoolsPythonV2:46`);
 
@@ -65,9 +19,6 @@ export class ApiStack extends cdk.Stack {
         roleName: `${props.stage}-${props.project}-${lambda.name}-role`,
         assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
         description: `A Role allowing ${lambda.name} access to the ${props.stage}-${props.project}-table`,
-        managedPolicies: [
-          iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
-        ],
         inlinePolicies: {
           'dynamo-read-policy': new iam.PolicyDocument({
             statements: [
@@ -142,17 +93,6 @@ export class ApiStack extends cdk.Stack {
         description: `${lambda.name} Lambda ARN`,
         exportName: `${props.stage}-${props.project}-${lambda.name}-lambda-arn`
       });
-
-      _api.root.addMethod(`${lambda.name}`, new APIGW.LambdaIntegration(_lambda));
-      if (lambda.name === 'GET') {
-        _api.root.addResource('{id}').addMethod('GET', new APIGW.LambdaIntegration(_lambda));
-      }
-    });
-
-    new cdk.CfnOutput(this, 'APIUrl', {
-      value: `${_api.url}`,
-      description: 'API URL',
-      exportName: `${props.stage}-${props.project}-api-url`
     });
   }
 }

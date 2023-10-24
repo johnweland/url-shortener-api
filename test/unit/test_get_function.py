@@ -22,7 +22,7 @@ class test_get_function(TestCase):
     def setUp(self):
         """Setup before each test."""
         super().setUp()
-        self.table_name = "records"
+        self.table_name = "dev-url-shortner-table"
         self.dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
         self.dynamodb.create_table(
             TableName=self.table_name,
@@ -35,7 +35,8 @@ class test_get_function(TestCase):
             ProvisionedThroughput={"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
         )
         self.table = self.dynamodb.Table(self.table_name)
-        from src.get_function import get_all_items, get_item_by_id, lambda_handler
+        from src.get_function import (get_all_items, get_item_by_id,
+                                      lambda_handler)
 
         self.lambda_handler = lambda_handler
         self.get_all_items = get_all_items
@@ -59,11 +60,17 @@ class test_get_function(TestCase):
             }
         )
 
+    def test_get_current_time(self):
+        pass
+
+    def test_get_location(self):
+        pass
+
     def test_get_all_items(self):
         """Test get_all_items function."""
         event = APIGatewayProxyEvent(
             data={
-                "path": "/api/v1/records",
+                "path": "/",
                 "httpMethod": "GET",
                 "headers": {"Content-Type": "application/json"},
             }
@@ -85,7 +92,7 @@ class test_get_function(TestCase):
         """Test get_item_by_id function."""
         event = APIGatewayProxyEvent(
             data={
-                "path": "/api/v1/records/de305d54",
+                "path": "/de305d54",
                 "httpMethod": "GET",
                 "headers": {"Content-Type": "application/json"},
             }
@@ -100,7 +107,7 @@ class test_get_function(TestCase):
         """Test get_item_by_id function."""
         event = APIGatewayProxyEvent(
             data={
-                "path": "/api/v1/records/123",
+                "path": "/123",
                 "httpMethod": "GET",
                 "headers": {"Content-Type": "application/json"},
             }
@@ -118,7 +125,7 @@ class test_get_function(TestCase):
             )
             event = APIGatewayProxyEvent(
                 data={
-                    "path": "/api/v1/records",
+                    "path": "/",
                     "httpMethod": "GET",
                     "headers": {"Content-Type": "application/json"},
                 }
@@ -141,7 +148,7 @@ class test_get_function(TestCase):
             )
             event = APIGatewayProxyEvent(
                 data={
-                    "path": "/api/v1/records/de305d54",
+                    "path": "/de305d54",
                     "httpMethod": "GET",
                     "headers": {"Content-Type": "application/json"},
                 }
@@ -154,3 +161,6 @@ class test_get_function(TestCase):
             self.assertEqual(
                 json.loads(response["body"])["message"], "Internal Server Error"
             )
+
+    def tearDown(self) -> None:
+        return super().tearDown()

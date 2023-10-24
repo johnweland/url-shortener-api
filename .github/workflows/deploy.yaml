@@ -6,16 +6,9 @@ on:
     branches:
       - main
 jobs:
-  dev:
-    name: Deploy to Dev
-    uses: ./.github/workflows/deploy-to-aws.yaml
-    with:
-      environment: dev
-    secrets: inherit
   prod:
     name: Deploy to Prod
     uses: ./.github/workflows/deploy-to-aws.yaml
     with:
       environment: prod
     secrets: inherit
-    needs: dev
