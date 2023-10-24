@@ -5,8 +5,11 @@ from os import environ
 
 import boto3
 from aws_lambda_powertools import Logger, Tracer
-from aws_lambda_powertools.event_handler import (APIGatewayRestResolver,
-                                                 Response, content_types)
+from aws_lambda_powertools.event_handler import (
+    APIGatewayRestResolver,
+    Response,
+    content_types,
+)
 from aws_lambda_powertools.utilities.data_classes import APIGatewayProxyEvent
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from botocore.exceptions import ClientError
@@ -55,6 +58,7 @@ def get_item_by_id(id: str) -> Response:
         item = table.get_item(Key={"id": id}).get("Item")
 
         if not item:
+            log.error("URL not found")
             return Response(
                 status_code=HTTPStatus.NOT_FOUND.value,
                 body=json.dumps({"message": "URL not found"}),

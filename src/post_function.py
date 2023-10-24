@@ -7,8 +7,11 @@ from os import environ
 
 import boto3
 from aws_lambda_powertools import Logger, Tracer
-from aws_lambda_powertools.event_handler import (APIGatewayRestResolver,
-                                                 Response, content_types)
+from aws_lambda_powertools.event_handler import (
+    APIGatewayRestResolver,
+    Response,
+    content_types,
+)
 from aws_lambda_powertools.utilities.data_classes import APIGatewayProxyEvent
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from botocore.exceptions import ClientError
@@ -43,6 +46,7 @@ def post_item() -> Response:
     url = event_data.get("url")
     created_at = get_current_time()
     if not url:
+        log.error("The 'URL' field is required.")
         return Response(
             status_code=HTTPStatus.BAD_REQUEST.value,
             content_type=content_types.APPLICATION_JSON,
@@ -56,6 +60,7 @@ def post_item() -> Response:
                 FilterExpression=boto3.dynamodb.conditions.Attr("url").eq(url)
             )["Items"]
         ):
+            log.error("Item already exists.")
             return Response(
                 status_code=HTTPStatus.CONFLICT.value,
                 content_type=content_types.APPLICATION_JSON,

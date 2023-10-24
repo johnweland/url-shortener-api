@@ -6,8 +6,11 @@ from os import environ
 
 import boto3
 from aws_lambda_powertools import Logger, Tracer
-from aws_lambda_powertools.event_handler import (APIGatewayRestResolver,
-                                                 Response, content_types)
+from aws_lambda_powertools.event_handler import (
+    APIGatewayRestResolver,
+    Response,
+    content_types,
+)
 from aws_lambda_powertools.utilities.data_classes import APIGatewayProxyEvent
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from botocore.exceptions import ClientError
@@ -42,6 +45,7 @@ def put_item() -> Response:
     required_fields = ["id", "url"]
     for field in required_fields:
         if field not in event_data:
+            log.error(f"The '{field}' field is required.")
             return Response(
                 status_code=HTTPStatus.BAD_REQUEST.value,
                 content_type=content_types.APPLICATION_JSON,

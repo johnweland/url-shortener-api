@@ -5,8 +5,11 @@ from os import environ
 
 import boto3
 from aws_lambda_powertools import Logger, Tracer
-from aws_lambda_powertools.event_handler import (APIGatewayRestResolver,
-                                                 Response, content_types)
+from aws_lambda_powertools.event_handler import (
+    APIGatewayRestResolver,
+    Response,
+    content_types,
+)
 from aws_lambda_powertools.utilities.data_classes import APIGatewayProxyEvent
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from botocore.exceptions import ClientError
@@ -29,6 +32,7 @@ def delete_item_by_id() -> Response:
 
     id = event_data.get("id")
     if not id:
+        log.error("id is required.")
         return Response(
             status_code=HTTPStatus.BAD_REQUEST.value,
             content_type=content_types.APPLICATION_JSON,
@@ -36,6 +40,7 @@ def delete_item_by_id() -> Response:
         )
     try:
         if not table.get_item(Key={"id": id}).get("Item"):
+            log.error(f"Item with id {id} not found.")
             return Response(
                 status_code=HTTPStatus.NOT_FOUND.value,
                 content_type=content_types.APPLICATION_JSON,
