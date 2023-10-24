@@ -1,14 +1,14 @@
 import * as cdk from 'aws-cdk-lib';
 import { Template, Match } from 'aws-cdk-lib/assertions';
 import { ApiStack } from '../lib/api-stack';
-import { coreStackProps } from '../bin/stack-config';
+import { apiStackProps } from '../bin/stack-config';
 
 let app: cdk.App, stack: cdk.Stack, template: Template;
 
 beforeAll(() => {
   app = new cdk.App();
   stack = new ApiStack(app, 'APIStack', {
-    ...coreStackProps
+    ...apiStackProps
   });
   template = Template.fromStack(stack);
 });
@@ -34,11 +34,11 @@ describe('API Gateway', () => {
         Tags: [
           {
             Key: "project",
-            Value: coreStackProps.project,
+            Value: apiStackProps.project,
           },
           {
             Key: "stage",
-            Value: coreStackProps.stage,
+            Value: apiStackProps.stage,
           }
         ]
       })
@@ -69,11 +69,11 @@ describe('GET Lambda', () => {
         Tags: [
           {
             Key: "project",
-            Value: coreStackProps.project,
+            Value: apiStackProps.project,
           },
           {
             Key: "stage",
-            Value: coreStackProps.stage,
+            Value: apiStackProps.stage,
           }
         ]
       })
