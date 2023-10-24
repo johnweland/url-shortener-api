@@ -1,4 +1,4 @@
-![Codecov](https://img.shields.io/codecov/c/github/johnweland/url-shortener-api/main?label=Code%20Coverage)
+[![Codecov](https://img.shields.io/codecov/c/github/johnweland/url-shortener-api/main?label=Code%20Coverage)](https://app.codecov.io/gh/johnweland/url-shortener-api)
 
 # URL Shortener API
 
