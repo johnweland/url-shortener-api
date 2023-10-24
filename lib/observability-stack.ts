@@ -11,12 +11,9 @@ export class ObservabilityStack extends cdk.Stack {
     cdk.Tags.of(this).add('project', props.project);
     cdk.Tags.of(this).add('stage', props.stage);
 
-    const Project = props.project.toUpperCase();
-    const Stage = props.stage.toUpperCase();
-
     const dashboard = new Dashboard(this, `dashboard`, {
       dashboardName: `${props.stage}-${props.project}-dashboard`,
-      defaultInterval: cdk.Duration.minutes(1),
+      defaultInterval: cdk.Duration.hours(3),
     })
 
     dashboard.addWidgets(
@@ -27,6 +24,7 @@ export class ObservabilityStack extends cdk.Stack {
       }),
       new cdk.aws_cloudwatch.GraphWidget({
         title: 'Read usage (average units/second)',
+        height: 6,
         right: [
           new cdk.aws_cloudwatch.Metric({
             namespace: 'AWS/DynamoDB',
@@ -52,9 +50,9 @@ export class ObservabilityStack extends cdk.Stack {
           }),
         ],
       }),
-
       new cdk.aws_cloudwatch.GraphWidget({
         title: 'Write usage (average units/second)',
+        height: 6,
         right: [
           new cdk.aws_cloudwatch.Metric({
             namespace: 'AWS/DynamoDB',
@@ -80,23 +78,33 @@ export class ObservabilityStack extends cdk.Stack {
           }),
         ],
       }),
-      // Log table for Table Operation Metrics on DynamoDB
-      new cdk.aws_cloudwatch.LogQueryWidget({
-        title: 'Table Operation Metrics',
-        logGroupNames: [
-          `/aws/dynamodb/table/${props.stage}-${props.project}-table`,
-        ],
-        queryLines: [
-          'fields @timestamp, @message',
-          'filter operation IN ["GetItem", "PutItem", "DeleteItem", "UpdateItem"]',
-          'sort @timestamp desc',
-        ],
-        width: 24,
+      new cdk.aws_cloudwatch.GraphWidget({
+        title: 'User Errors',
         height: 6,
+        left: [
+          new cdk.aws_cloudwatch.Metric({
+            namespace: 'AWS/DynamoDB',
+            metricName: 'UserErrors',
+            label: 'Errors',
+            dimensionsMap: {
+              TableName: `${props.stage}-${props.project}-table`,
+            },
+            period: cdk.Duration.hours(3),
+            statistic: 'sum',
+          }),
+        ],
+      }),
+      new cdk.aws_cloudwatch.AlarmStatusWidget({
+        title: 'Dynamo Alarms',
+        height: 6,
+        alarms: [
+          Alarm.fromAlarmArn(this, 'dynamo-read-alarms', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-dynamo-read-throttle-events`),
+          Alarm.fromAlarmArn(this, 'dynamo-write-alarms', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-dynamo-write-throttle-events`),
+          Alarm.fromAlarmArn(this, 'dynamo-user-alarm', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-dynamo-user-errors`),
+        ],
       }),
     );
 
-    // Create a CloudWatch dashboard widget for Lambda function errors
     dashboard.addWidgets(
       new cdk.aws_cloudwatch.TextWidget({
         markdown: `## Lambda`,
@@ -276,16 +284,38 @@ export class ObservabilityStack extends cdk.Stack {
           }),
         ],
       }),
-      // Create Alarm Widget
+
+      new cdk.aws_cloudwatch.AlarmStatusWidget({
+        title: 'Lambda Invocations',
+        width: 8,
+        alarms: [
+          Alarm.fromAlarmArn(this, 'get-lambda-invocations', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-GET-lambda-invocations`),
+          Alarm.fromAlarmArn(this, 'post-lambda-invocations', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-POST-lambda-invocations`),
+          Alarm.fromAlarmArn(this, 'put-lambda-invocations', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-PUT-lambda-invocations`),
+          Alarm.fromAlarmArn(this, 'patch-lambda-invocations', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-PATCH-lambda-invocations`),
+          Alarm.fromAlarmArn(this, 'delete-lambda-invocations', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-DELETE-lambda-invocations`),
+        ],
+      }),
+      new cdk.aws_cloudwatch.AlarmStatusWidget({
+        title: 'Lambda Duration',
+        width: 8,
+        alarms: [
+          Alarm.fromAlarmArn(this, 'get-lambda-duration', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-GET-lambda-duration`),
+          Alarm.fromAlarmArn(this, 'post-lambda-duration', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-POST-lambda-duration`),
+          Alarm.fromAlarmArn(this, 'put-lambda-duration', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-PUT-lambda-duration`),
+          Alarm.fromAlarmArn(this, 'patch-lambda-duration', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-PATCH-lambda-duration`),
+          Alarm.fromAlarmArn(this, 'delete-lambda-duration', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-DELETE-lambda-duration`),
+        ],
+      }),
       new cdk.aws_cloudwatch.AlarmStatusWidget({
         title: 'Lambda Errors',
-        width: 24,
+        width: 8,
         alarms: [
-          Alarm.fromAlarmArn(this, 'get-lambda-errors', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-get-lambda-errors`),
-          Alarm.fromAlarmArn(this, 'post-lambda-errors', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-post-lambda-errors`),
-          Alarm.fromAlarmArn(this, 'put-lambda-errors', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-put-lambda-errors`),
-          Alarm.fromAlarmArn(this, 'patch-lambda-errors', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-patch-lambda-errors`),
-          Alarm.fromAlarmArn(this, 'delete-lambda-errors', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-delete-lambda-errors`),
+          Alarm.fromAlarmArn(this, 'get-lambda-errors', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-GET-lambda-errors`),
+          Alarm.fromAlarmArn(this, 'post-lambda-errors', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-POST-lambda-errors`),
+          Alarm.fromAlarmArn(this, 'put-lambda-errors', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-PUT-lambda-errors`),
+          Alarm.fromAlarmArn(this, 'patch-lambda-errors', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-PATCH-lambda-errors`),
+          Alarm.fromAlarmArn(this, 'delete-lambda-errors', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-DELETE-lambda-errors`),
         ],
       }),
     );
@@ -297,29 +327,26 @@ export class ObservabilityStack extends cdk.Stack {
         width: 24,
         height: 1,
       }),
+
       new cdk.aws_cloudwatch.LogQueryWidget({
-        title: 'API Gateway Errors',
-        width: 24,
+        title: 'API Gateway Logs',
+        width: 18,
         height: 6,
         logGroupNames: [
           `/aws/apigateway/${props.stage}-${props.project}/GatewayExecutionLogs`,
         ],
         queryLines: [
           'fields @timestamp, @message',
-          'filter @message like / (4|5){1}[0-9]{1}[0-9]{1} /',
           'sort @timestamp desc',
         ],
       }),
-      new cdk.aws_cloudwatch.LogQueryWidget({
-        title: 'API Gateway Logs',
-        width: 24,
+      new cdk.aws_cloudwatch.AlarmStatusWidget({
+        title: 'API Gateway Alarms',
+        width: 6,
         height: 6,
-        logGroupNames: [
-          `/aws/apigateway/${props.stage}-${props.project}/GatewayExecutionLogs`,
-        ],
-        queryLines: [
-          'fields @timestamp, @message',
-          'sort @timestamp desc',
+        alarms: [
+          Alarm.fromAlarmArn(this, 'api-client-errors', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-client-error`),
+          Alarm.fromAlarmArn(this, 'api-server-errors', `arn:aws:cloudwatch:${this.region}:${this.account}:alarm:${props.stage}-${props.project}-server-error`),
         ],
       }),
     );

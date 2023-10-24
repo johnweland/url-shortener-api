@@ -65,6 +65,9 @@ export class ApiStack extends cdk.Stack {
         roleName: `${props.stage}-${props.project}-${lambda.name}-role`,
         assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
         description: `A Role allowing ${lambda.name} access to the ${props.stage}-${props.project}-table`,
+        managedPolicies: [
+          iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+        ],
         inlinePolicies: {
           'dynamo-read-policy': new iam.PolicyDocument({
             statements: [

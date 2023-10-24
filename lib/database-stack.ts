@@ -3,7 +3,6 @@ import { Construct } from 'constructs';
 import { ICoreStackProps } from '../bin/stack-config-types';
 import { Table, AttributeType, BillingMode } from 'aws-cdk-lib/aws-dynamodb';
 
-
 export class DatabaseStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: ICoreStackProps) {
     super(scope, id, props);
@@ -22,7 +21,6 @@ export class DatabaseStack extends cdk.Stack {
       pointInTimeRecovery: true,
     })
 
-    //  create alarms for table metrics
     table.metric('readThrottleEvents', {
       period: cdk.Duration.minutes(5),
       statistic: 'sum',
@@ -30,7 +28,7 @@ export class DatabaseStack extends cdk.Stack {
       threshold: 1,
       evaluationPeriods: 1,
       alarmDescription: 'Read Throttle Events',
-      alarmName: `${props.stage}-${props.project}-read-throttle-events`,
+      alarmName: `${props.stage}-${props.project}-dynamo-read-throttle-events`,
       treatMissingData: cdk.aws_cloudwatch.TreatMissingData.NOT_BREACHING,
     })
 
@@ -41,10 +39,20 @@ export class DatabaseStack extends cdk.Stack {
       threshold: 1,
       evaluationPeriods: 1,
       alarmDescription: 'Write Throttle Events',
-      alarmName: `${props.stage}-${props.project}-write-throttle-events`,
+      alarmName: `${props.stage}-${props.project}-dynamo-write-throttle-events`,
       treatMissingData: cdk.aws_cloudwatch.TreatMissingData.NOT_BREACHING,
     })
 
+    table.metric('userErrors', {
+      period: cdk.Duration.minutes(5),
+      statistic: 'sum',
+    }).createAlarm(this, 'userErrorsAlarm', {
+      threshold: 1,
+      evaluationPeriods: 1,
+      alarmDescription: 'User Errors',
+      alarmName: `${props.stage}-${props.project}-dynamo-user-errors`,
+      treatMissingData: cdk.aws_cloudwatch.TreatMissingData.NOT_BREACHING,
+    })
 
     new cdk.CfnOutput(this, 'tableARN', {
       value: `arn:aws:dynamodb:${this.region}:${this.account}:table/${props.stage}-${props.project}-table`,
