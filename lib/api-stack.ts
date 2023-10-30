@@ -1,7 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { IApiStackProps } from '../bin/stack-config-types';
-import * as APIGW from 'aws-cdk-lib/aws-apigateway';
+import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as Lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 
@@ -14,31 +14,24 @@ export class ApiStack extends cdk.Stack {
     cdk.Tags.of(this).add('project', props.project);
     cdk.Tags.of(this).add('stage', props.stage);
 
+
     const _logGroup = new cdk.aws_logs.LogGroup(this, `APIGatewayLogGroup`, {
       logGroupName: `/aws/apigateway/${props.stage}-${props.project}/GatewayExecutionLogs`,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       retention: cdk.aws_logs.RetentionDays.ONE_WEEK,
     });
 
-    const _api = new APIGW.RestApi(this, `APIGateWay`, {
+    const _api = new apigateway.RestApi(this, `APIGateWay`, {
       restApiName: `${props.stage}-${props.project}-api-gateway`,
       description: `An API Gateway for the ${props.project} service`,
+      endpointTypes: [apigateway.EndpointType.EDGE],
       deployOptions: {
         stageName: props.stage,
         metricsEnabled: true,
-        loggingLevel: APIGW.MethodLoggingLevel.INFO,
-        accessLogDestination: new APIGW.LogGroupLogDestination(_logGroup),
+        loggingLevel: apigateway.MethodLoggingLevel.INFO,
+        accessLogDestination: new apigateway.LogGroupLogDestination(_logGroup),
         dataTraceEnabled: true,
-      },
-      endpointConfiguration: {
-        types: [APIGW.EndpointType.REGIONAL],
-      },
-      defaultCorsPreflightOptions: {
-        allowHeaders: ['*'],
-        allowOrigins: ['*'],
-        allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-        allowCredentials: true,
-        statusCode: 200,
+        tracingEnabled: true,
       },
       cloudWatchRole: true,
     });
@@ -143,9 +136,9 @@ export class ApiStack extends cdk.Stack {
         exportName: `${props.stage}-${props.project}-${lambda.name}-lambda-arn`
       });
 
-      _api.root.addMethod(`${lambda.name}`, new APIGW.LambdaIntegration(_lambda));
+      _api.root.addMethod(`${lambda.name}`, new apigateway.LambdaIntegration(_lambda));
       if (lambda.name === 'GET') {
-        _api.root.addResource('{id}').addMethod('GET', new APIGW.LambdaIntegration(_lambda));
+        _api.root.addResource('{id}').addMethod('GET', new apigateway.LambdaIntegration(_lambda));
       }
     });
 

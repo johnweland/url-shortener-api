@@ -320,7 +320,6 @@ export class ObservabilityStack extends cdk.Stack {
       }),
     );
 
-    // Create a CloudWatch dashboard widget for API Gateway errors
     dashboard.addWidgets(
       new cdk.aws_cloudwatch.TextWidget({
         markdown: `## API Gateway`,
@@ -350,11 +349,6 @@ export class ObservabilityStack extends cdk.Stack {
         ],
       }),
     );
-
-
-
-
-
 
     new cdk.CfnOutput(this, 'dashboardUrl', {
       value: `https://console.aws.amazon.com/cloudwatch/home?region=${this.region}#dashboards:name=${props.stage}-${props.project}-dashboard`,
