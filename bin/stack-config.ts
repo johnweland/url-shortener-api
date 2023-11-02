@@ -16,6 +16,7 @@ const apiStackProps: IApiStackProps = {
       actions: [
         'dynamodb:GetItem',
         'dynamodb:Scan',
+        'dynamodb:UpdateItem'
       ]
     },
     {

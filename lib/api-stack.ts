@@ -33,6 +33,13 @@ export class ApiStack extends cdk.Stack {
         dataTraceEnabled: true,
         tracingEnabled: true,
       },
+      defaultCorsPreflightOptions: {
+        allowHeaders: ['*'],
+        allowOrigins: ['*'],
+        allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+        allowCredentials: true,
+        statusCode: 200,
+      },
       cloudWatchRole: true,
     });
 

@@ -26,32 +26,33 @@ trace: Tracer = Tracer(service=APP_NAME)
 
 @app.delete("/")
 @trace.capture_method
-def delete_item_by_id() -> Response:
+def delete_item_by_slug() -> Response:
     """Delete a item from DynamoDB table."""
     event_data = app.current_event.json_body
 
-    id = event_data.get("id")
-    if not id:
-        log.error("id is required.")
+    slug = event_data.get("slug")
+    if not slug:
+        log.error("slug is required.")
         return Response(
             status_code=HTTPStatus.BAD_REQUEST.value,
             content_type=content_types.APPLICATION_JSON,
-            body=json.dumps({"message": "id is required."}),
+            body=json.dumps({"message": "slug is required."}),
         )
     try:
-        if not table.get_item(Key={"id": id}).get("Item"):
-            log.error(f"Item with id {id} not found.")
+        if not table.get_item(Key={"slug": slug}).get("Item"):
+            log.error(f"Item with slug /{slug} not found.")
             return Response(
                 status_code=HTTPStatus.NOT_FOUND.value,
                 content_type=content_types.APPLICATION_JSON,
-                body=json.dumps({"message": f"Item with id {id} not found."}),
+                body=json.dumps({"message": f"Item with a slug of /{slug} not found."}),
             )
 
-        table.delete_item(Key={"id": id})
+        table.delete_item(Key={"slug": slug})
 
         return Response(
             status_code=HTTPStatus.NO_CONTENT.value,
             content_type=content_types.APPLICATION_JSON,
+            headers={"Access-Control-Allow-Origin": "*"},
             body=None,
         )
     except ClientError as error:

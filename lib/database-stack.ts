@@ -13,7 +13,7 @@ export class DatabaseStack extends cdk.Stack {
     const table = new Table(this, `table`, {
       tableName: `${props.stage}-${props.project}-table`,
       partitionKey: {
-        name: 'id',
+        name: 'slug',
         type: AttributeType.STRING
       },
       billingMode: BillingMode.PAY_PER_REQUEST,

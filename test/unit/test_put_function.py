@@ -27,10 +27,10 @@ class test_put_function(TestCase):
         self.dynamodb.create_table(
             TableName=self.table_name,
             KeySchema=[
-                {"AttributeName": "id", "KeyType": "HASH"},
+                {"AttributeName": "slug", "KeyType": "HASH"},
             ],
             AttributeDefinitions=[
-                {"AttributeName": "id", "AttributeType": "S"},
+                {"AttributeName": "slug", "AttributeType": "S"},
             ],
             ProvisionedThroughput={"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
         )
@@ -45,15 +45,15 @@ class test_put_function(TestCase):
         table = self.table
         table.put_item(
             Item={
-                "id": "de305d54",
-                "url": "https://www.google.com",
+                "slug": "de305d54",
+                "targetUrl": "https://www.google.com",
                 "createdAt": "2021-01-01T00:00:00.000Z",
             }
         )
         table.put_item(
             Item={
-                "id": "75b4431b",
-                "url": "https://www.example.com",
+                "slug": "75b4431b",
+                "targetUrl": "https://www.example.com",
                 "createdAt": "2022-03-08T00:00:00.000Z",
             }
         )
@@ -66,7 +66,7 @@ class test_put_function(TestCase):
                 "httpMethod": "PUT",
                 "headers": {"Content-Type": "application/json"},
                 "body": json.dumps(
-                    {"id": "de305d54", "url": "https://www.microsoft.com"}
+                    {"slug": "de305d54", "targetUrl": "https://www.microsoft.com"}
                 ),
             }
         )
@@ -75,20 +75,20 @@ class test_put_function(TestCase):
         self.assertEqual(response["statusCode"], HTTPStatus.OK.value)
 
     def test_put_item_bad_request(self):
-        """Test put_item_by_id function when there is a BAD REQUEST."""
+        """Test put_item_by_slug function when there is a BAD REQUEST."""
         event = APIGatewayProxyEvent(
             data={
                 "path": "/",
                 "httpMethod": "PUT",
                 "headers": {"Content-Type": "application/json"},
-                "body": json.dumps({"url": "https://www.amazon.com"}),
+                "body": json.dumps({"targetUrl": "https://www.amazon.com"}),
             }
         )
         context: LambdaContext = Mock()
         response = self.lambda_handler(event, context)
         self.assertEqual(response["statusCode"], HTTPStatus.BAD_REQUEST.value)
         self.assertEqual(
-            json.loads(response["body"])["message"], "The 'id' field is required."
+            json.loads(response["body"])["message"], "The 'slug' field is required."
         )
 
     def test_put_item_error(self):
@@ -99,7 +99,7 @@ class test_put_function(TestCase):
                 "path": "/",
                 "httpMethod": "PUT",
                 "headers": {"Content-Type": "application/json"},
-                "body": json.dumps({"id": "2cd9cab6", "url": "https://www.amazon.com"}),
+                "body": json.dumps({"slug": "2cd9cab6", "targetUrl": "https://www.amazon.com"}),
             }
         )
         with patch(

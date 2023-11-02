@@ -42,22 +42,22 @@ def post_item() -> Response:
     """POST an item to DynamoDB table."""
     event_data = app.current_event.json_body
 
-    id = event_data.get("id") or str(uuid.uuid4())[:8]
-    url = event_data.get("url")
+    slug = event_data.get("slug") or str(uuid.uuid4())[:8]
+    target_url = event_data.get("targetUrl")
     created_at = get_current_time()
-    if not url:
-        log.error("The 'URL' field is required.")
+    if not target_url:
+        log.error("The 'Target URL' field is required.")
         return Response(
             status_code=HTTPStatus.BAD_REQUEST.value,
             content_type=content_types.APPLICATION_JSON,
-            body=json.dumps({"message": "The 'URL' field is required."}),
+            body=json.dumps({"message": "The 'Target URL' field is required."}),
         )
     try:
         # check if and item with the same id OR the same url already exists
         if (
-            table.get_item(Key={"id": id}).get("Item")
+            table.get_item(Key={"slug": slug}).get("Item")
             or table.scan(
-                FilterExpression=boto3.dynamodb.conditions.Attr("url").eq(url)
+                FilterExpression=boto3.dynamodb.conditions.Attr("targetUrl").eq(target_url)
             )["Items"]
         ):
             log.error("Item already exists.")
@@ -68,8 +68,9 @@ def post_item() -> Response:
             )
 
         item = {
-            "id": id,
-            "url": url,
+            "slug": slug,
+            "targetUrl": target_url,
+            "requests": [],
             "createdAt": created_at,
         }
         table.put_item(Item=item)
@@ -77,6 +78,7 @@ def post_item() -> Response:
         return Response(
             status_code=HTTPStatus.CREATED.value,
             content_type=content_types.APPLICATION_JSON,
+            headers={"Access-Control-Allow-Origin": "*"},
             body=None,
         )
     except ClientError as error:

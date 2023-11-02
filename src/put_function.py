@@ -42,7 +42,7 @@ def put_item() -> Response:
     event_data = app.current_event.json_body
 
     last_updated_at = get_current_time()
-    required_fields = ["id", "url"]
+    required_fields = ["slug", "targetUrl"]
     for field in required_fields:
         if field not in event_data:
             log.error(f"The '{field}' field is required.")
@@ -54,8 +54,8 @@ def put_item() -> Response:
     try:
         table.put_item(
             Item={
-                "id": event_data["id"],
-                "url": event_data["url"],
+                "slug": event_data["slug"],
+                "targetUrl": event_data["targetUrl"],
                 "lastUpdatedAt": str(last_updated_at),
             }
         )
@@ -63,6 +63,7 @@ def put_item() -> Response:
         return Response(
             status_code=HTTPStatus.OK.value,
             content_type=content_types.APPLICATION_JSON,
+            headers={"Access-Control-Allow-Origin": "*"},
             body=None,
         )
     except ClientError as error:
