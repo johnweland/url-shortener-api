@@ -92,7 +92,7 @@ export class ApiStack extends cdk.Stack {
       const _lambda = new Lambda.Function(this, `${lambda.name}-Lambda`, {
         functionName: `${props.stage}-${props.project}-${lambda.name}-lambda`,
         description: `Handles ${lambda.name} requests for the ${props.project} micro-service`,
-        runtime: Lambda.Runtime.PYTHON_3_10,
+        runtime: Lambda.Runtime.PYTHON_3_11,
         handler: lambda.handler,
         code: Lambda.Code.fromAsset('src'),
         memorySize: lambda.memorySize,

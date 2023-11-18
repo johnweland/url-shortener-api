@@ -1,4 +1,14 @@
-""" GET Lambda. """
+""" 
+GET Lambda. 
+
+This module contains the GET Lambda function for a URL shortener service. It retrieves items from a DynamoDB table and handles API Gateway requests.
+
+Functions:
+- get_all_items(): Get all items from the DynamoDB table.
+- get_item_by_slug(slug: str): Get an item from the DynamoDB table by slug.
+- lambda_handler(event: APIGatewayProxyEvent, context: LambdaContext): Lambda handler function.
+"""
+
 import json
 from datetime import datetime, timezone
 from http import HTTPStatus
@@ -14,6 +24,7 @@ from aws_lambda_powertools.event_handler import (
 from aws_lambda_powertools.utilities.data_classes import APIGatewayProxyEvent
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from botocore.exceptions import ClientError
+from src.core_modules import (get_current_time)
 
 APP_NAME = environ.get("APP_NAME") or "url-shortener GET"
 AWS_REGION = environ.get("AWS_REGION") or "us-east-1"
@@ -25,20 +36,11 @@ log: Logger = Logger(service=APP_NAME)
 trace: Tracer = Tracer(service=APP_NAME)
 
 
-def get_current_time() -> str:
-    """Get current time in ISO format."""
-    return (
-        datetime.now(tz=timezone.utc)
-        .replace(microsecond=0)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
-
 
 @app.get("/")
 @trace.capture_method
 def get_all_items() -> Response:
-    """Get all items from DynamoDB table."""
+    """Get all items from the DynamoDB table."""
     try:
         response = table.scan()
         return Response(
@@ -61,11 +63,23 @@ def get_all_items() -> Response:
         )
 
 
+
 @app.get("/<slug>")
 @trace.capture_method
 def get_item_by_slug(slug: str) -> Response:
-    """Get a item from DynamoDB table."""
+    """Get an item from the DynamoDB table by slug. 
+    Update the item's requests list with the current request. 
+    Then return a 302 redirect to the item's target URL.
 
+    Args:
+        slug (str): The slug of the item to retrieve.
+
+    Returns:
+        Response: The response containing the item's target URL or an error message.
+
+    Raises:
+        ClientError: If there is an error retrieving the item from the DynamoDB table.
+    """
     try:
         item = table.get_item(Key={"slug": slug}).get("Item")
 
@@ -120,5 +134,16 @@ def get_item_by_slug(slug: str) -> Response:
 def lambda_handler(
     event: APIGatewayProxyEvent, context: LambdaContext
 ) -> dict[str, any]:
-    """Lambda handler."""
+    """Lambda handler.
+
+    This is the entry point for the Lambda function.
+    It invokes the `resolve` method of the `app` object to handle the incoming event.
+
+    Args:
+        event (APIGatewayProxyEvent): The event object representing the incoming API Gateway request.
+        context (LambdaContext): The context object representing the runtime information.
+
+    Returns:
+        dict[str, any]: The response from the Lambda function.
+    """
     return app.resolve(event, context)

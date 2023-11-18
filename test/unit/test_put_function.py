@@ -103,12 +103,12 @@ class test_put_function(TestCase):
             }
         )
         with patch(
-            "src.put_function.table.put_item",
+            "src.put_function.table.update_item",
             side_effect=ClientError(
                 error_response={
                     "Error": {"Code": "500", "Message": "Internal Server Error"}
                 },
-                operation_name="put_item",
+                operation_name="update_item",
             ),
         ):
             response = self.lambda_handler(event, context)

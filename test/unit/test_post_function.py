@@ -96,14 +96,14 @@ class test_post_function(TestCase):
                 "path": "/",
                 "httpMethod": "POST",
                 "headers": {"Content-Type": "application/json"},
-                "body": json.dumps({"targetUrl": None}),
+                "body": json.dumps({}),
             }
         )
         context: LambdaContext = Mock()
         response = self.lambda_handler(event, context)
         self.assertEqual(response["statusCode"], HTTPStatus.BAD_REQUEST.value)
         self.assertEqual(
-            json.loads(response["body"])["message"], "The 'Target URL' field is required."
+            json.loads(response["body"])["message"], "The 'targetUrl' field is required."
         )
 
     def test_post_item_error(self):
