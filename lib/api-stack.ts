@@ -59,6 +59,13 @@ export class ApiStack extends cdk.Stack {
       treatMissingData: cdk.aws_cloudwatch.TreatMissingData.NOT_BREACHING,
     });
 
+    new cdk.CfnOutput(this, 'APIUrl', {
+      value: `${_api.url}`,
+      description: 'API URL',
+      exportName: `${props.stage}-${props.project}-api-url`
+    });
+
+
     const _powertoolsLayer = Lambda.LayerVersion.fromLayerVersionArn(this, `PowertoolsLambdaLayer`, `arn:aws:lambda:${this.region}:017000801446:layer:AWSLambdaPowertoolsPythonV2:46`);
 
     props.lambdas.forEach((lambda) => {
@@ -150,15 +157,10 @@ export class ApiStack extends cdk.Stack {
       }
     });
 
-    new cdk.CfnOutput(this, 'APIUrl', {
-      value: `${_api.url}`,
-      description: 'API URL',
-      exportName: `${props.stage}-${props.project}-api-url`
-    });
 
-    // Create a CloudFront distribution that passes all requests through to the API Gateway created above
-    const _cloudfront = new CloudFront.Distribution(this, 'CloudFront', {
+    const _cloudfront = new CloudFront.Distribution(this, 'CFDistribution', {
       comment: `${props.stage}-${props.project}-cloudfront-distribution`,
+      minimumProtocolVersion: CloudFront.SecurityPolicyProtocol.TLS_V1_2_2021,
       defaultBehavior: {
         cachePolicy: CloudFront.CachePolicy.CACHING_DISABLED,
         origin: new origins.RestApiOrigin(_api, {
@@ -168,9 +170,8 @@ export class ApiStack extends cdk.Stack {
         cachedMethods: CloudFront.CachedMethods.CACHE_GET_HEAD_OPTIONS,
       },
       priceClass: CloudFront.PriceClass.PRICE_CLASS_ALL,
-      httpVersion: CloudFront.HttpVersion.HTTP2_AND_3,
+      httpVersion: CloudFront.HttpVersion.HTTP3,
     });
-
 
     new cdk.CfnOutput(this, 'CloudFrontDistributionId', {
       value: `${_cloudfront.distributionId}`,
