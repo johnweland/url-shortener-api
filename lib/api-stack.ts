@@ -43,7 +43,6 @@ export class ApiStack extends cdk.Stack {
       },
       cloudWatchRole: true,
     });
-
     _api.metricClientError().createAlarm(this, 'ClientErrorAlarm', {
       threshold: 1,
       evaluationPeriods: 1,
