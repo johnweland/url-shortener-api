@@ -2,9 +2,10 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { IApiStackProps } from '../bin/stack-config-types';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as CloudFront from 'aws-cdk-lib/aws-cloudfront';
+import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as Lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
-
 
 
 export class ApiStack extends cdk.Stack {
@@ -154,5 +155,33 @@ export class ApiStack extends cdk.Stack {
       description: 'API URL',
       exportName: `${props.stage}-${props.project}-api-url`
     });
+
+    // Create a CloudFront distribution that passes all requests through to the API Gateway created above
+    const _cloudfront = new CloudFront.Distribution(this, 'CloudFront', {
+      comment: `${props.stage}-${props.project}-cloudfront-distribution`,
+      defaultBehavior: {
+        cachePolicy: CloudFront.CachePolicy.CACHING_DISABLED,
+        origin: new origins.RestApiOrigin(_api, {
+          originPath: `/${props.stage}`,
+        }),
+        allowedMethods: CloudFront.AllowedMethods.ALLOW_ALL,
+        cachedMethods: CloudFront.CachedMethods.CACHE_GET_HEAD_OPTIONS,
+      },
+      priceClass: CloudFront.PriceClass.PRICE_CLASS_ALL,
+      httpVersion: CloudFront.HttpVersion.HTTP2_AND_3,
+    });
+
+
+    new cdk.CfnOutput(this, 'CloudFrontDistributionId', {
+      value: `${_cloudfront.distributionId}`,
+      description: 'CloudFront Distribution ID',
+      exportName: `${props.stage}-${props.project}-cloudfront-distribution-id`
+    });
+
+    new cdk.CfnOutput(this, 'CloudFrontDomainName', {
+      value: `${_cloudfront.distributionDomainName}`,
+      description: 'CloudFront Domain Name',
+      exportName: `${props.stage}-${props.project}-cloudfront-domain-name`
+    })
   }
 }

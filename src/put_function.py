@@ -10,6 +10,8 @@ Functions:
 import json
 from http import HTTPStatus
 from os import environ
+import os
+import sys
 
 import boto3
 from aws_lambda_powertools import Logger, Tracer
@@ -21,7 +23,8 @@ from aws_lambda_powertools.event_handler import (
 from aws_lambda_powertools.utilities.data_classes import APIGatewayProxyEvent
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from botocore.exceptions import ClientError
-from src.core_modules import (get_current_time)
+sys.path.append(os.path.join(os.path.dirname(__file__)))
+from core_modules import (get_current_time)
 
 APP_NAME = environ.get("APP_NAME") or "url-shortener POST"
 AWS_REGION = environ.get("AWS_REGION") or "us-east-1"
