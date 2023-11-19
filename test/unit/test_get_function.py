@@ -27,35 +27,37 @@ class test_get_function(TestCase):
         self.dynamodb.create_table(
             TableName=self.table_name,
             KeySchema=[
-                {"AttributeName": "id", "KeyType": "HASH"},
+                {"AttributeName": "slug", "KeyType": "HASH"},
             ],
             AttributeDefinitions=[
-                {"AttributeName": "id", "AttributeType": "S"},
+                {"AttributeName": "slug", "AttributeType": "S"},
             ],
             ProvisionedThroughput={"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
         )
         self.table = self.dynamodb.Table(self.table_name)
-        from src.get_function import (get_all_items, get_item_by_id,
+        from src.get_function import (get_all_items, get_item_by_slug,
                                       lambda_handler)
 
         self.lambda_handler = lambda_handler
         self.get_all_items = get_all_items
-        self.get_items_by_id = get_item_by_id
+        self.get_items_by_slug = get_item_by_slug
         self.seed_data()
 
     def seed_data(self):
         table = self.table
         table.put_item(
             Item={
-                "id": "de305d54",
-                "url": "https://www.google.com",
+                "slug": "de305d54",
+                "targetUrl": "https://www.google.com",
+                "requests": [],
                 "createdAt": "2021-01-01T00:00:00.000Z",
             }
         )
         table.put_item(
             Item={
-                "id": "75b4431b",
-                "url": "https://www.example.com",
+                "slug": "75b4431b",
+                "targetUrl": "https://www.example.com",
+                "requests": [],
                 "createdAt": "2022-03-08T00:00:00.000Z",
             }
         )
@@ -79,22 +81,29 @@ class test_get_function(TestCase):
         response = self.lambda_handler(event, context)
         self.assertEqual(response["statusCode"], HTTPStatus.OK.value)
         self.assertEqual(json.loads(response["body"])["Count"], 2)
-        self.assertEqual(json.loads(response["body"])["Items"][0]["id"], "de305d54")
+        self.assertEqual(json.loads(response["body"])["Items"][0]["slug"], "de305d54")
         self.assertEqual(
-            json.loads(response["body"])["Items"][0]["url"], "https://www.google.com"
+            json.loads(response["body"])["Items"][0]["targetUrl"], "https://www.google.com"
         )
-        self.assertEqual(json.loads(response["body"])["Items"][1]["id"], "75b4431b")
+        self.assertEqual(json.loads(response["body"])["Items"][1]["slug"], "75b4431b")
         self.assertEqual(
-            json.loads(response["body"])["Items"][1]["url"], "https://www.example.com"
+            json.loads(response["body"])["Items"][1]["targetUrl"], "https://www.example.com"
         )
 
-    def test_get_item_by_id(self):
-        """Test get_item_by_id function."""
+    def test_get_item_by_slug_with_referer(self):
+        """Test get_item_by_slug function."""
         event = APIGatewayProxyEvent(
             data={
                 "path": "/de305d54",
                 "httpMethod": "GET",
                 "headers": {"Content-Type": "application/json"},
+                "multiValueHeaders": {"Referer": ["https://www.facebook.com"]},
+                "requestContext": {
+                    "identity": {
+                        "sourceIp": "0.0.0.0",
+                        "userAgent": "Mozilla/5.0",
+                    }
+                }
             }
         )
         context: LambdaContext = Mock()
@@ -103,19 +112,48 @@ class test_get_function(TestCase):
         self.assertEqual(response["statusCode"], HTTPStatus.FOUND.value)
         self.assertEqual(json.loads(str_response), "https://www.google.com")
 
-    def test_get_item_by_id_not_found(self):
-        """Test get_item_by_id function."""
+    def test_get_item_by_slug_no_referer(self):
+        """Test get_item_by_slug function."""
+        event = APIGatewayProxyEvent(
+            data={
+                "path": "/de305d54",
+                "httpMethod": "GET",
+                "headers": {"Content-Type": "application/json"},
+                "multiValueHeaders": {"Referer": None},
+                "requestContext": {
+                    "identity": {
+                        "sourceIp": "0.0.0.0",
+                        "userAgent": "Mozilla/5.0",
+                    }
+                }
+            }
+        )
+        context: LambdaContext = Mock()
+        response = self.lambda_handler(event, context)
+        str_response = json.dumps(response["multiValueHeaders"]["Location"][0])
+        self.assertEqual(response["statusCode"], HTTPStatus.FOUND.value)
+        self.assertEqual(json.loads(str_response), "https://www.google.com")
+
+    def test_get_item_by_slug_not_found(self):
+        """Test get_item_by_slug function."""
         event = APIGatewayProxyEvent(
             data={
                 "path": "/123",
                 "httpMethod": "GET",
                 "headers": {"Content-Type": "application/json"},
+                "multiValueHeaders": {"Referer": ["https://www.facebook.com"]},
+                "requestContext": {
+                    "identity": {
+                        "sourceIp": "0.0.0.0",
+                        "userAgent": "Mozilla/5.0",
+                    }
+                }
             }
         )
         context: LambdaContext = Mock()
         response = self.lambda_handler(event, context)
         self.assertEqual(response["statusCode"], HTTPStatus.NOT_FOUND.value)
-        self.assertEqual(json.loads(response["body"])["message"], "URL not found")
+        self.assertEqual(json.loads(response["body"])["message"], "Target URL not found")
 
     def test_get_all_items_error(self):
         """Test get_all_items function when there is an error."""
@@ -139,8 +177,8 @@ class test_get_function(TestCase):
                 json.loads(response["body"])["message"], "Internal Server Error"
             )
 
-    def test_get_item_by_id_error(self):
-        """Test get_item_by_id function when there is an error."""
+    def test_get_item_by_slug_error(self):
+        """Test get_item_by_slug function when there is an error."""
         with patch("src.get_function.table.get_item") as mock_get_item:
             mock_get_item.side_effect = ClientError(
                 {"Error": {"Code": "500", "Message": "Internal Server Error"}},

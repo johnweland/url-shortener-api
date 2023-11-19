@@ -11,11 +11,25 @@ export class ObservabilityStack extends cdk.Stack {
     cdk.Tags.of(this).add('project', props.project);
     cdk.Tags.of(this).add('stage', props.stage);
 
+    /**
+     * Cloudwatch Dashboard
+     * 
+     * @type {Dashboard}
+     * @memberof ObservabilityStack
+     * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-cloudwatch-readme.html
+     */
     const dashboard = new Dashboard(this, `dashboard`, {
       dashboardName: `${props.stage}-${props.project}-dashboard`,
       defaultInterval: cdk.Duration.hours(3),
     })
 
+    /**
+     * Cloudwatch Dashboard Widgets for DynamoDB
+     * 
+     * @memberof ObservabilityStack
+     * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-cloudwatch-readme.html
+     * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-dynamodb-readme.html
+     */
     dashboard.addWidgets(
       new cdk.aws_cloudwatch.TextWidget({
         markdown: `## DynamoDB`,
@@ -105,6 +119,13 @@ export class ObservabilityStack extends cdk.Stack {
       }),
     );
 
+    /**
+     * Cloudwatch Dashboard Widgets for Lambda
+     * 
+     * @memberof ObservabilityStack
+     * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-cloudwatch-readme.html
+     * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-lambda-readme.html
+     */
     dashboard.addWidgets(
       new cdk.aws_cloudwatch.TextWidget({
         markdown: `## Lambda`,
@@ -320,7 +341,13 @@ export class ObservabilityStack extends cdk.Stack {
       }),
     );
 
-    // Create a CloudWatch dashboard widget for API Gateway errors
+    /**
+     * Cloudwatch Dashboard Widgets for API Gateway
+     * 
+     * @memberof ObservabilityStack
+     * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-cloudwatch-readme.html
+     * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-apigateway-readme.html
+     */
     dashboard.addWidgets(
       new cdk.aws_cloudwatch.TextWidget({
         markdown: `## API Gateway`,
@@ -351,11 +378,12 @@ export class ObservabilityStack extends cdk.Stack {
       }),
     );
 
-
-
-
-
-
+    /** 
+     * Cloudwatch Dashboard Outputs
+     * 
+     * @memberof ObservabilityStack
+     * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-cdk-lib.CfnOutput.html
+     */
     new cdk.CfnOutput(this, 'dashboardUrl', {
       value: `https://console.aws.amazon.com/cloudwatch/home?region=${this.region}#dashboards:name=${props.stage}-${props.project}-dashboard`,
       description: 'Cloudwatch Dashboard URL',
@@ -367,6 +395,13 @@ export class ObservabilityStack extends cdk.Stack {
       exportName: `${props.stage}-${props.project}-dashboard-arn`
     })
 
+    /** 
+     * Resource Group
+     *
+     * @memberof ObservabilityStack
+     * @type {resourceGroup.CfnGroup}
+     * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-resourcegroups-readme.html
+     */
     new resourceGroup.CfnGroup(this, `resourceGroup`, {
       name: `${props.stage}-${props.project}`,
       resourceQuery: {
@@ -393,6 +428,12 @@ export class ObservabilityStack extends cdk.Stack {
       }
     });
 
+    /** 
+     *
+     * @memberof ObservabilityStack
+     * @type {cdk.CfnOutput}
+     * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-cdk-lib.CfnOutput.html 
+     */
     new cdk.CfnOutput(this, 'resourceGroupName', {
       value: `${props.stage}-${props.project}`,
       description: 'Resource Group Name',

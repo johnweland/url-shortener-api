@@ -9,6 +9,7 @@ export interface ICoreStackProps extends StackProps {
 }
 
 export interface IApiStackProps extends ICoreStackProps {
+  apiKey: string;
   lambdas: ILambda[];
 }
 export interface ILambda {

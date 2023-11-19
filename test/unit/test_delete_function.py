@@ -27,92 +27,92 @@ class test_delete_function(TestCase):
         self.dynamodb.create_table(
             TableName=self.table_name,
             KeySchema=[
-                {"AttributeName": "id", "KeyType": "HASH"},
+                {"AttributeName": "slug", "KeyType": "HASH"},
             ],
             AttributeDefinitions=[
-                {"AttributeName": "id", "AttributeType": "S"},
+                {"AttributeName": "slug", "AttributeType": "S"},
             ],
             ProvisionedThroughput={"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
         )
         self.table = self.dynamodb.Table(self.table_name)
-        from src.delete_function import delete_item_by_id, lambda_handler
+        from src.delete_function import delete_item_by_slug, lambda_handler
 
         self.lambda_handler = lambda_handler
-        self.delete_item_by_id = delete_item_by_id
+        self.delete_item_by_slug = delete_item_by_slug
         self.seed_data()
 
     def seed_data(self):
         table = self.table
         table.put_item(
             Item={
-                "id": "de305d54",
-                "url": "https://www.google.com",
+                "slug": "de305d54",
+                "targetUrl": "https://www.google.com",
                 "createdAt": "2021-01-01T00:00:00.000Z",
             }
         )
         table.put_item(
             Item={
-                "id": "75b4431b",
-                "url": "https://www.example.com",
+                "slug": "75b4431b",
+                "targetUrl": "https://www.example.com",
                 "createdAt": "2022-03-08T00:00:00.000Z",
             }
         )
 
-    def test_delete_item_by_id(self):
-        """Test delete_item_by_id function."""
+    def test_delete_item_by_slug(self):
+        """Test delete_item_by_slug function."""
         event = APIGatewayProxyEvent(
             data={
                 "path": "/",
                 "httpMethod": "DELETE",
                 "headers": {"Content-Type": "application/json"},
-                "body": json.dumps({"id": "de305d54"}),
+                "body": json.dumps({"slug": "de305d54"}),
             }
         )
         context: LambdaContext = Mock()
         response = self.lambda_handler(event, context)
         self.assertEqual(response["statusCode"], HTTPStatus.NO_CONTENT.value)
 
-    def test_delete_item_by_id_not_found(self):
-        """Test delete_item_by_id function when the item is NOT FOUND."""
+    def test_delete_item_by_slug_not_found(self):
+        """Test delete_item_by_slug function when the item is NOT FOUND."""
         event = APIGatewayProxyEvent(
             data={
                 "path": "/",
                 "httpMethod": "DELETE",
                 "headers": {"Content-Type": "application/json"},
-                "body": json.dumps({"id": "123"}),
+                "body": json.dumps({"slug": "123"}),
             }
         )
         context: LambdaContext = Mock()
         response = self.lambda_handler(event, context)
         self.assertEqual(response["statusCode"], HTTPStatus.NOT_FOUND.value)
         self.assertEqual(
-            json.loads(response["body"])["message"], "Item with id 123 not found."
+            json.loads(response["body"])["message"], "Item with a slug of /123 not found."
         )
 
-    def test_delete_item_by_id_bad_request(self):
-        """Test delete_item_by_id function when there is a BAD REQUEST."""
+    def test_delete_item_by_slug_bad_request(self):
+        """Test delete_item_by_slug function when there is a BAD REQUEST."""
         event = APIGatewayProxyEvent(
             data={
                 "path": "/",
                 "httpMethod": "DELETE",
                 "headers": {"Content-Type": "application/json"},
-                "body": json.dumps({"ids": ""}),
+                "body": json.dumps({"slugs": ""}),
             }
         )
         context: LambdaContext = Mock()
         response = self.lambda_handler(event, context)
         self.assertEqual(response["statusCode"], HTTPStatus.BAD_REQUEST.value)
-        self.assertEqual(json.loads(response["body"])["message"], "id is required.")
+        self.assertEqual(json.loads(response["body"])["message"], "slug is required.")
 
-    def test_delete_item_by_id_error(self):
-        """Test delete_item_by_id function when there is an error."""
+    def test_delete_item_by_slug_error(self):
+        """Test delete_item_by_slug function when there is an error."""
         context: LambdaContext = Mock()
         event = APIGatewayProxyEvent(
             data={
                 "path": "/",
                 "httpMethod": "DELETE",
                 "headers": {"Content-Type": "application/json"},
-                "body": json.dumps({"id": "de305d54"}),
+                "body": json.dumps({"slug": "de305d54"}),
             }
         )
         with patch(

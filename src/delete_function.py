@@ -1,4 +1,12 @@
-""" DELETE Lambda. """
+""" DELETE Lambda.
+
+This module contains the DELETE Lambda function for deleting an item from a DynamoDB table.
+
+Functions:
+- delete_item_by_slug(): Delete an item from the DynamoDB table by slug.
+- lambda_handler(event: APIGatewayProxyEvent, context: LambdaContext): Lambda handler function.
+"""
+
 import json
 from http import HTTPStatus
 from os import environ
@@ -26,33 +34,44 @@ trace: Tracer = Tracer(service=APP_NAME)
 
 @app.delete("/")
 @trace.capture_method
-def delete_item_by_id() -> Response:
-    """Delete a item from DynamoDB table."""
+def delete_item_by_slug() -> Response:
+    """Delete a item from DynamoDB table.
+
+    This function handles the DELETE request to delete an item from the DynamoDB table.
+    It expects a JSON payload with a "slug" field specifying the item to be deleted.
+    If the item is found, it is deleted from the table returning a 204. 
+    Otherwise, a 404 response is returned.
+    If any error occurs during the deletion process, a 500 response is returned.
+
+    Returns:
+        Response: The HTTP response object.
+    """
     event_data = app.current_event.json_body
 
-    id = event_data.get("id")
-    if not id:
-        log.error("id is required.")
+    slug = event_data.get("slug")
+    if not slug:
+        log.error("slug is required.")
         return Response(
             status_code=HTTPStatus.BAD_REQUEST.value,
             content_type=content_types.APPLICATION_JSON,
-            body=json.dumps({"message": "id is required."}),
+            body=json.dumps({"message": "slug is required."}),
         )
     try:
-        if not table.get_item(Key={"id": id}).get("Item"):
-            log.error(f"Item with id {id} not found.")
+        if not table.get_item(Key={"slug": slug}).get("Item"):
+            log.error(f"Item with slug /{slug} not found.")
             return Response(
                 status_code=HTTPStatus.NOT_FOUND.value,
                 content_type=content_types.APPLICATION_JSON,
-                body=json.dumps({"message": f"Item with id {id} not found."}),
+                body=json.dumps({"message": f"Item with a slug of /{slug} not found."}),
             )
 
-        table.delete_item(Key={"id": id})
+        table.delete_item(Key={"slug": slug})
 
         return Response(
             status_code=HTTPStatus.NO_CONTENT.value,
             content_type=content_types.APPLICATION_JSON,
-            body=None,
+            headers={"Access-Control-Allow-Origin": "*"},
+            body=json.dumps({"message": "Successfully deleted shortened URL."})
         )
     except ClientError as error:
         log.error(error.response["Error"]["Message"])
@@ -65,5 +84,16 @@ def delete_item_by_id() -> Response:
 def lambda_handler(
     event: APIGatewayProxyEvent, context: LambdaContext
 ) -> dict[str, any]:
-    """Lambda handler."""
+    """Lambda handler.
+
+    This is the entry point for the Lambda function.
+    It invokes the `resolve` method of the `app` object to handle the incoming event.
+
+    Args:
+        event (APIGatewayProxyEvent): The event object representing the incoming API Gateway request.
+        context (LambdaContext): The context object representing the runtime information.
+
+    Returns:
+        dict[str, any]: The response from the Lambda function.
+    """
     return app.resolve(event=event, context=context)
