@@ -15,16 +15,28 @@ export class ApiStack extends cdk.Stack {
     cdk.Tags.of(this).add('project', props.project);
     cdk.Tags.of(this).add('stage', props.stage);
 
-
+    /**
+     * API Gateway
+     * 
+     * @memberof ApiStack
+     * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-logs-readme.html
+     */
     const _logGroup = new cdk.aws_logs.LogGroup(this, `APIGatewayLogGroup`, {
       logGroupName: `/aws/apigateway/${props.stage}-${props.project}/GatewayExecutionLogs`,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       retention: cdk.aws_logs.RetentionDays.ONE_WEEK,
     });
 
+    /**
+     * API Gateway
+     * 
+     * @memberof ApiStack
+     * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-apigateway-readme.html
+     */
     const _api = new apigateway.RestApi(this, `APIGateWay`, {
       restApiName: `${props.stage}-${props.project}-api-gateway`,
-      description: `An API Gateway for the ${props.project} service`,
+      description: `An API Gateway for the ${props.project} micro-service`,
+      apiKeySourceType: apigateway.ApiKeySourceType.HEADER,
       endpointTypes: [apigateway.EndpointType.EDGE],
       deployOptions: {
         stageName: props.stage,
@@ -40,9 +52,48 @@ export class ApiStack extends cdk.Stack {
         allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
         allowCredentials: true,
         statusCode: 200,
+        disableCache: true,
       },
       cloudWatchRole: true,
     });
+
+    /**
+     * API Gateway API Key
+     * 
+     * @memberof ApiStack
+     * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-apigateway-readme.html
+     * @see https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-setup-api-key-with-restapi.html
+     */
+    const _apiKey = new apigateway.ApiKey(this, `APIKey`, {
+      apiKeyName: `${props.stage}-${props.project}-api-key`,
+      description: `An API Key for the ${props.project} micro-service`,
+      enabled: true,
+      value: `${props.apiKey}}`,
+    });
+
+    new cdk.CfnOutput(this, 'API Key ID', {
+      value: _apiKey.keyId,
+    });
+
+    /**
+     * API Gateway Usage Plan
+     * 
+     * @memberof ApiStack
+     * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-apigateway-readme.html
+     * @see https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-usage-plans.html
+     */
+    const _plan = new apigateway.UsagePlan(this, `UsagePlan`, {
+      name: `${props.stage}-${props.project}-usage-plan`,
+      description: `A usage plan for the ${props.project} micro-service`,
+      apiStages: [
+        {
+          api: _api,
+          stage: _api.deploymentStage,
+        },
+      ],
+    });
+    _plan.addApiKey(_apiKey);
+    _api.addUsagePlan(`${props.stage}-${props.project}-usage-plan`);
 
     _api.metricClientError().createAlarm(this, 'ClientErrorAlarm', {
       threshold: 1,
@@ -69,6 +120,13 @@ export class ApiStack extends cdk.Stack {
     const _powertoolsLayer = Lambda.LayerVersion.fromLayerVersionArn(this, `PowertoolsLambdaLayer`, `arn:aws:lambda:${this.region}:017000801446:layer:AWSLambdaPowertoolsPythonV2:46`);
 
     props.lambdas.forEach((lambda) => {
+      /**
+       * Lambda Role
+       * 
+       * @memberof ApiStack
+       * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-iam-readme.html
+       * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-lambda-readme.html
+       */
       const _role = new iam.Role(this, `${lambda.name}Role`, {
         roleName: `${props.stage}-${props.project}-${lambda.name}-role`,
         assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
@@ -77,7 +135,7 @@ export class ApiStack extends cdk.Stack {
           iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
         ],
         inlinePolicies: {
-          'dynamo-read-policy': new iam.PolicyDocument({
+          'dynamo-interaction-policy': new iam.PolicyDocument({
             statements: [
               new iam.PolicyStatement({
                 effect: iam.Effect.ALLOW,
@@ -97,6 +155,12 @@ export class ApiStack extends cdk.Stack {
         retention: cdk.aws_logs.RetentionDays.ONE_WEEK,
       });
 
+      /**
+       * Lambda Function
+       * 
+       * @memberof ApiStack
+       * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-lambda-readme.html
+       */
       const _lambda = new Lambda.Function(this, `${lambda.name}-Lambda`, {
         functionName: `${props.stage}-${props.project}-${lambda.name}-lambda`,
         description: `Handles ${lambda.name} requests for the ${props.project} micro-service`,
@@ -151,20 +215,33 @@ export class ApiStack extends cdk.Stack {
         exportName: `${props.stage}-${props.project}-${lambda.name}-lambda-arn`
       });
 
-      _api.root.addMethod(`${lambda.name}`, new apigateway.LambdaIntegration(_lambda));
+      _api.root.addMethod(`${lambda.name}`, new apigateway.LambdaIntegration(_lambda), {
+        apiKeyRequired: true,
+      });
       if (lambda.name === 'GET') {
-        _api.root.addResource('{id}').addMethod('GET', new apigateway.LambdaIntegration(_lambda));
+        _api.root.addResource('{id}').addMethod('GET', new apigateway.LambdaIntegration(_lambda), {
+          apiKeyRequired: true,
+        });
       }
     });
 
-
+    /**
+     * CloudFront Distribution
+     * 
+     * @memberof ApiStack
+     * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-cloudfront-readme.html
+     * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-cloudfront-origins-readme.html
+     */
     const _cloudfront = new CloudFront.Distribution(this, 'CFDistribution', {
-      comment: `${props.stage}-${props.project}-cloudfront-distribution`,
+      comment: `The ${props.stage} Cloud Front Distribution for the ${props.project} micro-service.`,
       minimumProtocolVersion: CloudFront.SecurityPolicyProtocol.TLS_V1_2_2021,
       defaultBehavior: {
         cachePolicy: CloudFront.CachePolicy.CACHING_DISABLED,
         origin: new origins.RestApiOrigin(_api, {
           originPath: `/${props.stage}`,
+          customHeaders: {
+            'x-api-key': `${props.apiKey}}`,
+          }
         }),
         allowedMethods: CloudFront.AllowedMethods.ALLOW_ALL,
         cachedMethods: CloudFront.CachedMethods.CACHE_GET_HEAD_OPTIONS,

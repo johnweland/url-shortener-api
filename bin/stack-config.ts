@@ -8,6 +8,7 @@ const coreStackProps: ICoreStackProps = {
 
 const apiStackProps: IApiStackProps = {
   ...coreStackProps,
+  apiKey: process.env.API_KEY || "sHozlahVmSnHuZEFdPaX",
   lambdas: [
     {
       name: 'GET',

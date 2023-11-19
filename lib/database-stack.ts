@@ -10,6 +10,12 @@ export class DatabaseStack extends cdk.Stack {
     cdk.Tags.of(this).add('project', props.project);
     cdk.Tags.of(this).add('stage', props.stage);
 
+    /**
+     * DynamoDB Table
+     * 
+     * @memberof DatabaseStack
+     * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-dynamodb-readme.html
+     */
     const table = new Table(this, `table`, {
       tableName: `${props.stage}-${props.project}-table`,
       partitionKey: {
@@ -21,6 +27,13 @@ export class DatabaseStack extends cdk.Stack {
       pointInTimeRecovery: true,
     })
 
+    /**
+     * DynamoDB Table Metrics and Alarms
+     * 
+     * @memberof DatabaseStack
+     * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-cloudwatch-readme.html
+     * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-dynamodb-readme.html
+     */
     table.metric('readThrottleEvents', {
       period: cdk.Duration.minutes(5),
       statistic: 'sum',
@@ -54,6 +67,12 @@ export class DatabaseStack extends cdk.Stack {
       treatMissingData: cdk.aws_cloudwatch.TreatMissingData.NOT_BREACHING,
     })
 
+    /**
+     * DynamoDB Table Outputs
+     * 
+     * @memberof DatabaseStack
+     * @see https://docs.aws.amazon.com/cdk/api/latest/docs/aws-cdk-lib.CfnOutput.html
+     */
     new cdk.CfnOutput(this, 'tableARN', {
       value: `arn:aws:dynamodb:${this.region}:${this.account}:table/${props.stage}-${props.project}-table`,
       description: 'DynamoDB Table ARN',
