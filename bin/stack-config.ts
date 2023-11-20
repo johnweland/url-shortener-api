@@ -17,7 +17,6 @@ const apiStackProps: IApiStackProps = {
       actions: [
         'dynamodb:GetItem',
         'dynamodb:Scan',
-        'dynamodb:UpdateItem'
       ]
     },
     {
@@ -37,6 +36,15 @@ const apiStackProps: IApiStackProps = {
       actions: [
         'dynamodb:GetItem',
         'dynamodb:PutItem',
+      ]
+    },
+    {
+      name: 'PATCH',
+      handler: 'patch_function.lambda_handler',
+      memorySize: 128,
+      actions: [
+        'dynamodb:GetItem',
+        'dynamodb:UpdateItem',
       ]
     },
     {
