@@ -65,9 +65,6 @@ class test_get_function(TestCase):
     def test_get_current_time(self):
         pass
 
-    def test_get_location(self):
-        pass
-
     def test_get_all_items(self):
         """Test get_all_items function."""
         event = APIGatewayProxyEvent(
@@ -90,49 +87,19 @@ class test_get_function(TestCase):
             json.loads(response["body"])["Items"][1]["targetUrl"], "https://www.example.com"
         )
 
-    def test_get_item_by_slug_with_referer(self):
+    def test_get_item_by_slug(self):
         """Test get_item_by_slug function."""
         event = APIGatewayProxyEvent(
             data={
                 "path": "/de305d54",
                 "httpMethod": "GET",
                 "headers": {"Content-Type": "application/json"},
-                "multiValueHeaders": {"Referer": ["https://www.facebook.com"]},
-                "requestContext": {
-                    "identity": {
-                        "sourceIp": "0.0.0.0",
-                        "userAgent": "Mozilla/5.0",
-                    }
-                }
             }
         )
         context: LambdaContext = Mock()
         response = self.lambda_handler(event, context)
-        str_response = json.dumps(response["multiValueHeaders"]["Location"][0])
-        self.assertEqual(response["statusCode"], HTTPStatus.FOUND.value)
-        self.assertEqual(json.loads(str_response), "https://www.google.com")
-
-    def test_get_item_by_slug_no_referer(self):
-        """Test get_item_by_slug function."""
-        event = APIGatewayProxyEvent(
-            data={
-                "path": "/de305d54",
-                "httpMethod": "GET",
-                "headers": {"Content-Type": "application/json"},
-                "multiValueHeaders": {"Referer": None},
-                "requestContext": {
-                    "identity": {
-                        "sourceIp": "0.0.0.0",
-                        "userAgent": "Mozilla/5.0",
-                    }
-                }
-            }
-        )
-        context: LambdaContext = Mock()
-        response = self.lambda_handler(event, context)
-        str_response = json.dumps(response["multiValueHeaders"]["Location"][0])
-        self.assertEqual(response["statusCode"], HTTPStatus.FOUND.value)
-        self.assertEqual(json.loads(str_response), "https://www.google.com")
+        self.assertEqual(response["statusCode"], HTTPStatus.OK.value)
+        self.assertEqual(json.loads(response["body"])["targetUrl"], "https://www.google.com")
 
     def test_get_item_by_slug_not_found(self):
         """Test get_item_by_slug function."""
@@ -141,13 +108,6 @@ class test_get_function(TestCase):
                 "path": "/123",
                 "httpMethod": "GET",
                 "headers": {"Content-Type": "application/json"},
-                "multiValueHeaders": {"Referer": ["https://www.facebook.com"]},
-                "requestContext": {
-                    "identity": {
-                        "sourceIp": "0.0.0.0",
-                        "userAgent": "Mozilla/5.0",
-                    }
-                }
             }
         )
         context: LambdaContext = Mock()

@@ -36,15 +36,15 @@ trace: Tracer = Tracer(service=APP_NAME)
 @trace.capture_method
 def delete_item_by_slug() -> Response:
     """Delete a item from DynamoDB table.
-
     This function handles the DELETE request to delete an item from the DynamoDB table.
     It expects a JSON payload with a "slug" field specifying the item to be deleted.
-    If the item is found, it is deleted from the table returning a 204. 
-    Otherwise, a 404 response is returned.
-    If any error occurs during the deletion process, a 500 response is returned.
 
     Returns:
+        Code: 204
         Response: The HTTP response object.
+    
+    Raises:
+        ClientError: If there is an error retrieving the item from the DynamoDB table.
     """
     event_data = app.current_event.json_body
 

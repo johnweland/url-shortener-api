@@ -41,13 +41,14 @@ trace: Tracer = Tracer(service=APP_NAME)
 @trace.capture_method
 def post_item() -> Response:
     """POST an item to DynamoDB table.
-
-    This function handles the POST request to create a shortened URL item in the DynamoDB table and returns a 201.
-    If the request body is missing a required field, it returns a 400.
-    If the item already exists, it returns a 409.
+    This function handles the POST request to create a shortened URL item in the DynamoDB table.
 
     Returns:
+        Code: 201
         Response: The HTTP response object.
+
+    Raises:
+        ClientError: If there is an error retrieving the item from the DynamoDB table.
     """
     event_data = app.current_event.json_body
 
@@ -68,7 +69,6 @@ def post_item() -> Response:
                 ),
             )
     try:
-        # check if and item with the same id OR the same url already exists
         if (
             table.get_item(Key={"slug": slug}).get("Item")
             or table.scan(

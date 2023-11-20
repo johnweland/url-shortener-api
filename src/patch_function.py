@@ -1,10 +1,10 @@
 """ 
-GET Lambda. 
+PATCH Lambda. 
 
-This module contains the GET Lambda function for a URL shortener service. It retrieves items from a DynamoDB table and handles API Gateway requests.
+This module contains the PATCH Lambda function for a URL shortener service. It updates the "request" list attribute for a specific item in a DynamoDB table and handles API Gateway requests.
 
 Functions:
-- get_all_items(): Get all items from the DynamoDB table.
+- patch_item(): Get all items from the DynamoDB table.
 - get_item_by_slug(slug: str): Get an item from the DynamoDB table by slug.
 - lambda_handler(event: APIGatewayProxyEvent, context: LambdaContext): Lambda handler function.
 """
@@ -38,62 +38,40 @@ log: Logger = Logger(service=APP_NAME)
 trace: Tracer = Tracer(service=APP_NAME)
 
 
-
-@app.get("/")
+@app.patch("/")
 @trace.capture_method
-def get_all_items() -> Response:
-    """Get all items from the DynamoDB table.
-        This function handles the GET request to get all item from the DynamoDB table.
-
-        Returns:
-            Code: 200
-            Response: The response containing the item's URL data.
-
-        Raises:
-            ClientError: If there is an error retrieving the item from the DynamoDB table.
-    """
-    try:
-        response = table.scan()
-        return Response(
-            status_code=HTTPStatus.OK.value,
-            content_type=content_types.APPLICATION_JSON,
-            headers={"Access-Control-Allow-Origin": "*"},
-            body=json.dumps(
-                {
-                    "Count": response["Count"],
-                    "Items": response["Items"],
-                    "Scanned": response["ScannedCount"],
-                }
-            ),
-        )
-    except ClientError as error:
-        log.error(error.response["Error"]["Message"])
-        return Response(
-            status_code=HTTPStatus.INTERNAL_SERVER_ERROR.value,
-            body=json.dumps({"message": error.response["Error"]["Message"]}),
-        )
-
-
-
-@app.get("/<slug>")
-@trace.capture_method
-def get_item_by_slug(slug: str) -> Response:
-    """Get an item from the DynamoDB table by slug. 
-    This function handles the GET request to get a single item from the DynamoDB table. 
-
-    Args:
-        slug (str): The slug of the item to retrieve.
+def patch_item() -> Response:
+    """PATCH an item in the DynamoDB table by slug. 
+    This function handles the PATCH request to update the item's requests list with the current request.
+    It expects a JSON payload with a "slug" field specifying the item to be patched. 
 
     Returns:
         Code: 200
-        Response: The response containing the item's URL data.
+        Response: The response containing the item's target URL or an error message.
 
     Raises:
         ClientError: If there is an error retrieving the item from the DynamoDB table.
     """
+
+    event_data = app.current_event.json_body
+    required_fields = ["slug", "requestIp", "userAgent"]
+    for field in required_fields:
+        if field not in event_data:
+            log.error(f"The '{field}' field is required.")
+            return Response(
+                status_code=HTTPStatus.BAD_REQUEST.value,
+                content_type=content_types.APPLICATION_JSON,
+                body=json.dumps(
+                    {"message": f"The '{field}' field is required."}
+                ),
+            )
+        
+    slug = event_data.get("slug")
+    request_ip = event_data.get("requestIp")
+    user_agent = event_data.get("userAgent")
+    referer = event_data.get("referer") or None
     try:
         item = table.get_item(Key={"slug": slug}).get("Item")
-
         if not item:
             log.error("URL not found")
             return Response(
@@ -101,11 +79,27 @@ def get_item_by_slug(slug: str) -> Response:
                 body=json.dumps({"message": "Target URL not found"}),
             )
 
+        table.update_item(
+            Key={"slug": slug},
+            UpdateExpression="SET #requests = list_append(#requests, :request)",
+            ExpressionAttributeNames={"#requests": "requests"},
+            ExpressionAttributeValues={
+                ":request": [
+                    {
+                        "ip": request_ip,
+                        "userAgent": user_agent,
+                        "referer": referer,
+                        "timestamp": get_current_time(),
+                    }
+                ]
+            },
+        )
+
         return Response(
             status_code=HTTPStatus.OK.value,
             content_type=content_types.APPLICATION_JSON,
-            headers={"Access-Control-Allow-Origin": "*",},
-            body=json.dumps(item),
+            headers={"Access-Control-Allow-Origin": "*"},
+            body=json.dumps({"message": "Successfully updated shortened URL."})
         )
     except ClientError as error:
         log.error(error.response["Error"]["Message"])
@@ -113,8 +107,7 @@ def get_item_by_slug(slug: str) -> Response:
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR.value,
             body=json.dumps({"message": error.response["Error"]["Message"]}),
         )
-
-
+    
 @trace.capture_lambda_handler
 def lambda_handler(
     event: APIGatewayProxyEvent, context: LambdaContext
