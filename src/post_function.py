@@ -8,11 +8,11 @@ Functions:
 """
 
 import json
+import os
+import sys
 import uuid
 from http import HTTPStatus
 from os import environ
-import os
-import sys
 
 import boto3
 from aws_lambda_powertools import Logger, Tracer
@@ -24,8 +24,9 @@ from aws_lambda_powertools.event_handler import (
 from aws_lambda_powertools.utilities.data_classes import APIGatewayProxyEvent
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from botocore.exceptions import ClientError
+
 sys.path.append(os.path.join(os.path.dirname(__file__)))
-from core_modules import (get_current_time)
+from core_modules import get_current_time
 
 APP_NAME = environ.get("APP_NAME") or "url-shortener POST"
 AWS_REGION = environ.get("AWS_REGION") or "us-east-1"
@@ -64,15 +65,15 @@ def post_item() -> Response:
             return Response(
                 status_code=HTTPStatus.BAD_REQUEST.value,
                 content_type=content_types.APPLICATION_JSON,
-                body=json.dumps(
-                    {"message": f"The '{field}' field is required."}
-                ),
+                body=json.dumps({"message": f"The '{field}' field is required."}),
             )
     try:
         if (
             table.get_item(Key={"slug": slug}).get("Item")
             or table.scan(
-                FilterExpression=boto3.dynamodb.conditions.Attr("targetUrl").eq(target_url)
+                FilterExpression=boto3.dynamodb.conditions.Attr("targetUrl").eq(
+                    target_url
+                )
             )["Items"]
         ):
             log.error("Item already exists.")
@@ -94,7 +95,7 @@ def post_item() -> Response:
             status_code=HTTPStatus.CREATED.value,
             content_type=content_types.APPLICATION_JSON,
             headers={"Access-Control-Allow-Origin": "*"},
-            body=json.dumps({"message": "Successfully created shortened URL."})
+            body=json.dumps({"message": "Successfully created shortened URL."}),
         )
     except ClientError as error:
         log.error(error.response["Error"]["Message"])

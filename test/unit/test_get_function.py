@@ -35,8 +35,7 @@ class test_get_function(TestCase):
             ProvisionedThroughput={"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
         )
         self.table = self.dynamodb.Table(self.table_name)
-        from src.get_function import (get_all_items, get_item_by_slug,
-                                      lambda_handler)
+        from src.get_function import get_all_items, get_item_by_slug, lambda_handler
 
         self.lambda_handler = lambda_handler
         self.get_all_items = get_all_items
@@ -80,11 +79,13 @@ class test_get_function(TestCase):
         self.assertEqual(json.loads(response["body"])["Count"], 2)
         self.assertEqual(json.loads(response["body"])["Items"][0]["slug"], "de305d54")
         self.assertEqual(
-            json.loads(response["body"])["Items"][0]["targetUrl"], "https://www.google.com"
+            json.loads(response["body"])["Items"][0]["targetUrl"],
+            "https://www.google.com",
         )
         self.assertEqual(json.loads(response["body"])["Items"][1]["slug"], "75b4431b")
         self.assertEqual(
-            json.loads(response["body"])["Items"][1]["targetUrl"], "https://www.example.com"
+            json.loads(response["body"])["Items"][1]["targetUrl"],
+            "https://www.example.com",
         )
 
     def test_get_item_by_slug(self):
@@ -99,7 +100,9 @@ class test_get_function(TestCase):
         context: LambdaContext = Mock()
         response = self.lambda_handler(event, context)
         self.assertEqual(response["statusCode"], HTTPStatus.OK.value)
-        self.assertEqual(json.loads(response["body"])["targetUrl"], "https://www.google.com")
+        self.assertEqual(
+            json.loads(response["body"])["targetUrl"], "https://www.google.com"
+        )
 
     def test_get_item_by_slug_not_found(self):
         """Test get_item_by_slug function."""
@@ -113,7 +116,9 @@ class test_get_function(TestCase):
         context: LambdaContext = Mock()
         response = self.lambda_handler(event, context)
         self.assertEqual(response["statusCode"], HTTPStatus.NOT_FOUND.value)
-        self.assertEqual(json.loads(response["body"])["message"], "Target URL not found")
+        self.assertEqual(
+            json.loads(response["body"])["message"], "Target URL not found"
+        )
 
     def test_get_all_items_error(self):
         """Test get_all_items function when there is an error."""

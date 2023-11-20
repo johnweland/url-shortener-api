@@ -8,10 +8,10 @@ Functions:
 - lambda_handler(event: APIGatewayProxyEvent, context: LambdaContext): Lambda handler function.
 """
 import json
-from http import HTTPStatus
-from os import environ
 import os
 import sys
+from http import HTTPStatus
+from os import environ
 
 import boto3
 from aws_lambda_powertools import Logger, Tracer
@@ -23,8 +23,9 @@ from aws_lambda_powertools.event_handler import (
 from aws_lambda_powertools.utilities.data_classes import APIGatewayProxyEvent
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from botocore.exceptions import ClientError
+
 sys.path.append(os.path.join(os.path.dirname(__file__)))
-from core_modules import (get_current_time)
+from core_modules import get_current_time
 
 APP_NAME = environ.get("APP_NAME") or "url-shortener POST"
 AWS_REGION = environ.get("AWS_REGION") or "us-east-1"
@@ -61,15 +62,11 @@ def put_item() -> Response:
             return Response(
                 status_code=HTTPStatus.BAD_REQUEST.value,
                 content_type=content_types.APPLICATION_JSON,
-                body=json.dumps(
-                    {"message": f"The '{field}' field is required."}
-                ),
+                body=json.dumps({"message": f"The '{field}' field is required."}),
             )
     try:
         update_expression = []
-        expression_attribute_values = {
-            ":lastUpdatedAt": str(last_updated_at)
-        }
+        expression_attribute_values = {":lastUpdatedAt": str(last_updated_at)}
         separator = ", "
 
         for attribute in event_data:
@@ -80,8 +77,9 @@ def put_item() -> Response:
         table.update_item(
             Key={"slug": event_data["slug"]},
             UpdateExpression=(
-                "SET lastUpdatedAt = :lastUpdatedAt, " +
-                separator.join(update_expression)),
+                "SET lastUpdatedAt = :lastUpdatedAt, "
+                + separator.join(update_expression)
+            ),
             ExpressionAttributeValues=expression_attribute_values,
         )
 
@@ -89,7 +87,7 @@ def put_item() -> Response:
             status_code=HTTPStatus.OK.value,
             content_type=content_types.APPLICATION_JSON,
             headers={"Access-Control-Allow-Origin": "*"},
-            body=json.dumps({"message": "Successfully updated shortened URL."})
+            body=json.dumps({"message": "Successfully updated shortened URL."}),
         )
     except ClientError as error:
         log.error(error.response["Error"]["Message"])

@@ -10,10 +10,10 @@ Functions:
 """
 
 import json
-from http import HTTPStatus
-from os import environ
 import os
 import sys
+from http import HTTPStatus
+from os import environ
 
 import boto3
 from aws_lambda_powertools import Logger, Tracer
@@ -25,8 +25,9 @@ from aws_lambda_powertools.event_handler import (
 from aws_lambda_powertools.utilities.data_classes import APIGatewayProxyEvent
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from botocore.exceptions import ClientError
+
 sys.path.append(os.path.join(os.path.dirname(__file__)))
-from core_modules import (get_current_time)
+from core_modules import get_current_time
 
 APP_NAME = environ.get("APP_NAME") or "url-shortener GET"
 AWS_REGION = environ.get("AWS_REGION") or "us-east-1"
@@ -38,19 +39,18 @@ log: Logger = Logger(service=APP_NAME)
 trace: Tracer = Tracer(service=APP_NAME)
 
 
-
 @app.get("/")
 @trace.capture_method
 def get_all_items() -> Response:
     """Get all items from the DynamoDB table.
-        This function handles the GET request to get all item from the DynamoDB table.
+    This function handles the GET request to get all item from the DynamoDB table.
 
-        Returns:
-            Code: 200
-            Response: The response containing the item's URL data.
+    Returns:
+        Code: 200
+        Response: The response containing the item's URL data.
 
-        Raises:
-            ClientError: If there is an error retrieving the item from the DynamoDB table.
+    Raises:
+        ClientError: If there is an error retrieving the item from the DynamoDB table.
     """
     try:
         response = table.scan()
@@ -74,12 +74,11 @@ def get_all_items() -> Response:
         )
 
 
-
 @app.get("/<slug>")
 @trace.capture_method
 def get_item_by_slug(slug: str) -> Response:
-    """Get an item from the DynamoDB table by slug. 
-    This function handles the GET request to get a single item from the DynamoDB table. 
+    """Get an item from the DynamoDB table by slug.
+    This function handles the GET request to get a single item from the DynamoDB table.
 
     Args:
         slug (str): The slug of the item to retrieve.
@@ -104,7 +103,9 @@ def get_item_by_slug(slug: str) -> Response:
         return Response(
             status_code=HTTPStatus.OK.value,
             content_type=content_types.APPLICATION_JSON,
-            headers={"Access-Control-Allow-Origin": "*",},
+            headers={
+                "Access-Control-Allow-Origin": "*",
+            },
             body=json.dumps(item),
         )
     except ClientError as error:

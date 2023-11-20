@@ -86,7 +86,8 @@ class test_delete_function(TestCase):
         response = self.lambda_handler(event, context)
         self.assertEqual(response["statusCode"], HTTPStatus.NOT_FOUND.value)
         self.assertEqual(
-            json.loads(response["body"])["message"], "Item with a slug of /123 not found."
+            json.loads(response["body"])["message"],
+            "Item with a slug of /123 not found.",
         )
 
     def test_delete_item_by_slug_bad_request(self):

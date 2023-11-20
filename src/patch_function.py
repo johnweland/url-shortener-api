@@ -10,10 +10,10 @@ Functions:
 """
 
 import json
-from http import HTTPStatus
-from os import environ
 import os
 import sys
+from http import HTTPStatus
+from os import environ
 
 import boto3
 from aws_lambda_powertools import Logger, Tracer
@@ -25,8 +25,9 @@ from aws_lambda_powertools.event_handler import (
 from aws_lambda_powertools.utilities.data_classes import APIGatewayProxyEvent
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from botocore.exceptions import ClientError
+
 sys.path.append(os.path.join(os.path.dirname(__file__)))
-from core_modules import (get_current_time)
+from core_modules import get_current_time
 
 APP_NAME = environ.get("APP_NAME") or "url-shortener GET"
 AWS_REGION = environ.get("AWS_REGION") or "us-east-1"
@@ -41,9 +42,9 @@ trace: Tracer = Tracer(service=APP_NAME)
 @app.patch("/")
 @trace.capture_method
 def patch_item() -> Response:
-    """PATCH an item in the DynamoDB table by slug. 
+    """PATCH an item in the DynamoDB table by slug.
     This function handles the PATCH request to update the item's requests list with the current request.
-    It expects a JSON payload with a "slug" field specifying the item to be patched. 
+    It expects a JSON payload with a "slug" field specifying the item to be patched.
 
     Returns:
         Code: 200
@@ -54,18 +55,18 @@ def patch_item() -> Response:
     """
 
     event_data = app.current_event.json_body
+
     required_fields = ["slug", "requestIp", "userAgent"]
+
     for field in required_fields:
         if field not in event_data:
             log.error(f"The '{field}' field is required.")
             return Response(
                 status_code=HTTPStatus.BAD_REQUEST.value,
                 content_type=content_types.APPLICATION_JSON,
-                body=json.dumps(
-                    {"message": f"The '{field}' field is required."}
-                ),
+                body=json.dumps({"message": f"The '{field}' field is required."}),
             )
-        
+
     slug = event_data.get("slug")
     request_ip = event_data.get("requestIp")
     user_agent = event_data.get("userAgent")
@@ -99,7 +100,7 @@ def patch_item() -> Response:
             status_code=HTTPStatus.OK.value,
             content_type=content_types.APPLICATION_JSON,
             headers={"Access-Control-Allow-Origin": "*"},
-            body=json.dumps({"message": "Successfully updated shortened URL."})
+            body=json.dumps({"message": "Successfully updated shortened URL."}),
         )
     except ClientError as error:
         log.error(error.response["Error"]["Message"])
@@ -107,7 +108,8 @@ def patch_item() -> Response:
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR.value,
             body=json.dumps({"message": error.response["Error"]["Message"]}),
         )
-    
+
+
 @trace.capture_lambda_handler
 def lambda_handler(
     event: APIGatewayProxyEvent, context: LambdaContext

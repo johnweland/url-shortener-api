@@ -68,7 +68,7 @@ export class ApiStack extends cdk.Stack {
       apiKeyName: `${props.stage}-${props.project}-api-key`,
       description: `An API Key for the ${props.project} micro-service`,
       enabled: true,
-      value: `${props.apiKey}}`,
+      value: `${props.apiKey}`,
     });
 
     new cdk.CfnOutput(this, 'API Key ID', {
@@ -240,7 +240,7 @@ export class ApiStack extends cdk.Stack {
         origin: new origins.RestApiOrigin(_api, {
           originPath: `/${props.stage}`,
           customHeaders: {
-            'x-api-key': `${props.apiKey}}`,
+            'x-api-key': `${props.apiKey}`,
           }
         }),
         allowedMethods: CloudFront.AllowedMethods.ALLOW_ALL,

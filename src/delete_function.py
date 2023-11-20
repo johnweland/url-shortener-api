@@ -42,7 +42,7 @@ def delete_item_by_slug() -> Response:
     Returns:
         Code: 204
         Response: The HTTP response object.
-    
+
     Raises:
         ClientError: If there is an error retrieving the item from the DynamoDB table.
     """
@@ -71,7 +71,7 @@ def delete_item_by_slug() -> Response:
             status_code=HTTPStatus.NO_CONTENT.value,
             content_type=content_types.APPLICATION_JSON,
             headers={"Access-Control-Allow-Origin": "*"},
-            body=json.dumps({"message": "Successfully deleted shortened URL."})
+            body=json.dumps({"message": "Successfully deleted shortened URL."}),
         )
     except ClientError as error:
         log.error(error.response["Error"]["Message"])

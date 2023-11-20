@@ -103,7 +103,8 @@ class test_post_function(TestCase):
         response = self.lambda_handler(event, context)
         self.assertEqual(response["statusCode"], HTTPStatus.BAD_REQUEST.value)
         self.assertEqual(
-            json.loads(response["body"])["message"], "The 'targetUrl' field is required."
+            json.loads(response["body"])["message"],
+            "The 'targetUrl' field is required.",
         )
 
     def test_post_item_error(self):
@@ -114,7 +115,9 @@ class test_post_function(TestCase):
                 "path": "/",
                 "httpMethod": "POST",
                 "headers": {"Content-Type": "application/json"},
-                "body": json.dumps({"slug": "2cd9cab6", "targetUrl": "https://www.amazon.com"}),
+                "body": json.dumps(
+                    {"slug": "2cd9cab6", "targetUrl": "https://www.amazon.com"}
+                ),
             }
         )
         with patch(

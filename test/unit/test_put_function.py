@@ -99,7 +99,9 @@ class test_put_function(TestCase):
                 "path": "/",
                 "httpMethod": "PUT",
                 "headers": {"Content-Type": "application/json"},
-                "body": json.dumps({"slug": "2cd9cab6", "targetUrl": "https://www.amazon.com"}),
+                "body": json.dumps(
+                    {"slug": "2cd9cab6", "targetUrl": "https://www.amazon.com"}
+                ),
             }
         )
         with patch(

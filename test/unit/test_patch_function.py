@@ -68,7 +68,12 @@ class test_patch_function(TestCase):
                 "httpMethod": "PATCH",
                 "headers": {"Content-Type": "application/json"},
                 "body": json.dumps(
-                    {"slug": "de305d54", "requestIp": "0.0.0.0", "userAgent": "some browser", "referer": "https://facebook.com"}
+                    {
+                        "slug": "de305d54",
+                        "requestIp": "0.0.0.0",
+                        "userAgent": "some browser",
+                        "referer": "https://facebook.com",
+                    }
                 ),
             }
         )
@@ -84,7 +89,11 @@ class test_patch_function(TestCase):
                 "httpMethod": "PATCH",
                 "headers": {"Content-Type": "application/json"},
                 "body": json.dumps(
-                    {"slug": "de305d54", "requestIp": "0.0.0.0", "userAgent": "some browser"}
+                    {
+                        "slug": "de305d54",
+                        "requestIp": "0.0.0.0",
+                        "userAgent": "some browser",
+                    }
                 ),
             }
         )
@@ -133,7 +142,13 @@ class test_patch_function(TestCase):
                 "path": "/",
                 "httpMethod": "PATCH",
                 "headers": {"Content-Type": "application/json"},
-                "body": json.dumps({"slug": "de305d54", "requestIp": "0.0.0.0", "userAgent": "some-browser"}),
+                "body": json.dumps(
+                    {
+                        "slug": "de305d54",
+                        "requestIp": "0.0.0.0",
+                        "userAgent": "some-browser",
+                    }
+                ),
             }
         )
         with patch(
