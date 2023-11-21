@@ -65,6 +65,15 @@ def put_item() -> Response:
                 body=json.dumps({"message": f"The '{field}' field is required."}),
             )
     try:
+        slug = event_data.get("slug")
+        item = table.get_item(Key={"slug": slug}).get("Item")
+        if not item:
+            log.error("URL not found")
+            return Response(
+                status_code=HTTPStatus.NOT_FOUND.value,
+                body=json.dumps({"message": "URL not found"}),
+            )
+
         update_expression = []
         expression_attribute_values = {":lastUpdatedAt": str(last_updated_at)}
         separator = ", "

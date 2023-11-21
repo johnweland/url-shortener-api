@@ -8,7 +8,7 @@ const coreStackProps: ICoreStackProps = {
 
 const apiStackProps: IApiStackProps = {
   ...coreStackProps,
-  apiKey: process.env.API_KEY || "sHozlahVmSnHuZEFdPaX",
+  apiKey: process.env.API_KEY || "sHozlahVmSnHuZEFdPaX2",
   lambdas: [
     {
       name: 'GET',
@@ -35,7 +35,7 @@ const apiStackProps: IApiStackProps = {
       memorySize: 128,
       actions: [
         'dynamodb:GetItem',
-        'dynamodb:PutItem',
+        'dynamodb:UpdateItem',
       ]
     },
     {

@@ -91,6 +91,23 @@ class test_put_function(TestCase):
             json.loads(response["body"])["message"], "The 'slug' field is required."
         )
 
+    def test_put_item_not_found(self):
+        """Test put_item_by_slug function when there is a BAD REQUEST."""
+        event = APIGatewayProxyEvent(
+            data={
+                "path": "/",
+                "httpMethod": "PUT",
+                "headers": {"Content-Type": "application/json"},
+                "body": json.dumps(
+                    {"slug": "1234", "targetUrl": "https://www.amazon.com"}
+                ),
+            }
+        )
+        context: LambdaContext = Mock()
+        response = self.lambda_handler(event, context)
+        self.assertEqual(response["statusCode"], HTTPStatus.NOT_FOUND.value)
+        self.assertEqual(json.loads(response["body"])["message"], "URL not found")
+
     def test_put_item_error(self):
         """Test put_item function when there is an error."""
         context: LambdaContext = Mock()
@@ -100,7 +117,7 @@ class test_put_function(TestCase):
                 "httpMethod": "PUT",
                 "headers": {"Content-Type": "application/json"},
                 "body": json.dumps(
-                    {"slug": "2cd9cab6", "targetUrl": "https://www.amazon.com"}
+                    {"slug": "de305d54", "targetUrl": "https://www.amazon.com"}
                 ),
             }
         )
